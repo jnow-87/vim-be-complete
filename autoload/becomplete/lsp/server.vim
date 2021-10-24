@@ -75,55 +75,21 @@ function s:server_start(filetype)
 	\	}
 	\ }
 
-	call becomplete#lsp#base#request(l:server, "initialize", l:p, function("s:init_hdlr"))
+	let l:res = becomplete#lsp#base#request(l:server, "initialize", l:p)
 
-	let l:retry = 0
-
-	while l:server["initialised"] == 0
-		sleep 10m
-
-		let l:retry += 1
-
-		if l:retry > 10
-			call becomplete#debug#error("server initialisation timeout")
-			let l:server["initialised"] = -1
-		endif
-	endwhile
-endfunction
-"}}}
-
-"{{{
-function s:init_hdlr(server, result)
-	if a:result != {}
-		call becomplete#debug#print("server initialised")
-		call becomplete#lsp#base#notification(a:server, "initialized", {})
-		let a:server["initialised"] = 1
-
-	else
-		call becomplete#debug#error("server initialisation failed")
-		let a:server["initialised"] = -1
-	endif
-endfunction
-"}}}
-
-"{{{
-function s:shutdown_hdlr(server, result)
-	if a:result == v:null
-		let l:job = a:server["job"]
-
-		call becomplete#debug#print("server shutdown")
-		call becomplete#lsp#base#notification(a:server, "exit", {})
-
-		call job_stop(l:job)
-		unlet s:server_jobs[l:job]
-		let a:server["initialised"] = 0
+	if l:res != {} && !has_key(l:res, "error")
+		call becomplete#debug#print("server initialised ")
+		call becomplete#lsp#base#notification(l:server, "initialized", {})
+		let l:server["initialised"] = 1
 
 		for l:ftype in l:server["filetypes"]
 			exec "autocmd! BeComplete FileType " . l:ftype
 		endfor
 
 	else
-		call becomplete#debug#error("server shutdown failed")
+		let l:err = get(l:res, "error", { "message": "unknown error" })
+		call becomplete#debug#error("server initialisation failed: " . l:err["message"])
+		let l:server["initialised"] = -1
 	endif
 endfunction
 "}}}
@@ -136,8 +102,10 @@ function s:close_hdlr(channel)
 	let l:server = get(s:server_jobs, l:job, {})
 
 	if l:server != {}
-		call becomplete#debug#print("server for filetype " . l:server["filetype"] . " closed")
-		call s:shutdown_hdlr(l:server, { 0 })
+		call becomplete#debug#error("server closed for filetypes " . string(l:server["filetypes"]))
+
+		unlet s:server_jobs[l:job]
+		let l:server["initialised"] = -1
 	endif
 endfunction
 "}}}
@@ -169,8 +137,22 @@ endfunction
 "{{{
 function becomplete#lsp#server#stop_all()
 	for l:server in values(s:server_jobs)
-		call becomplete#debug#print("trigger server shutdown: " . l:server["job"])
-		call becomplete#lsp#base#request(l:server, "shutdown", {}, function("s:shutdown_hdlr"))
+		call becomplete#debug#print("trigger server shutdown: " . l:server["command"][0])
+		let l:res = becomplete#lsp#base#request(l:server, "shutdown", {})
+
+		if l:res == v:null
+			let l:job = l:server["job"]
+
+			call becomplete#debug#print("server shutdown")
+			call becomplete#lsp#base#notification(l:server, "exit", {})
+
+			call job_stop(l:job)
+			unlet s:server_jobs[l:job]
+			let l:server["initialised"] = 0
+
+		else
+			call becomplete#debug#error("server shutdown failed: " . l:server["command"])
+		endif
 	endfor
 endfunction
 "}}}

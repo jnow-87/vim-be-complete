@@ -24,6 +24,33 @@ function s:send(job, data)
 endfunction
 "}}}
 
+"{{{
+function s:sync_request_hdlr(server, result, request_id)
+	call becomplete#debug#print("sync hdlr " . a:request_id . " " . string(a:result))
+
+	let l:req = a:server["requests"][a:request_id]
+	let l:req["result"] = a:result
+endfunction
+"}}}
+
+"{{{
+function s:sync_request_wait(request)
+	let l:retry = 0
+
+	while !has_key(a:request, "result")
+		sleep 10m
+		let l:retry += 1
+
+		if l:retry > 200
+			call becomplete#debug#print("timeout on request " . a:request["method"])
+			return { "error": { "message": "request timeout" }}
+		endif
+	endwhile
+
+	return a:request["result"]
+endfunction
+"}}}
+
 
 """"
 "" global functions
@@ -55,11 +82,9 @@ function becomplete#lsp#base#rx_hdlr(channel, msg)
 		try
 			let l:id = l:content["id"]
 			let l:request = l:server["requests"][l:id]
-			unlet l:server["requests"][l:id]
-			
 			let l:result = l:content["result"]
 
-			call l:request["hdlr"](l:server, l:result)
+			call l:request["hdlr"](l:server, l:result, l:id)
 
 		catch /^Vim(let):E716.*\"id\"/
 			call becomplete#debug#print("drop server message: " . string(l:content))
@@ -70,23 +95,36 @@ function becomplete#lsp#base#rx_hdlr(channel, msg)
 		catch /^Vim(let):E716.*\"\d\+\"/
 			call becomplete#debug#error("missing request data for id " . l:id)
 
+		finally
+			if exists("l:id")
+				unlet l:server["requests"][l:id]
+			endif
 		endtry
 	endwhile
 endfunction
 "}}}
 
 "{{{
-function becomplete#lsp#base#request(server, method, params, hdlr)
+function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	if job_status(a:server["job"]) != "run" || (a:server["initialised"] != 1 && a:method != "initialize")
 		call becomplete#debug#error("request \"" . a:method . "\": server not initialised")
 		return {}
 	endif
 
-	let l:req = s:format(a:method, a:params, a:server["request-id"])
-	let a:server["requests"][a:server["request-id"]] = { "method": a:method, "hdlr": a:hdlr }
+	let l:id = a:server["request-id"]
+	let l:req = {
+	\	"method": a:method,
+	\	"hdlr": (a:hdlr == v:none) ? function("s:sync_request_hdlr") : a:hdlr
+	\ }
+
+	let a:server["requests"][l:id] = l:req
 	let a:server["request-id"] += 1
 
-	call s:send(a:server["job"], l:req)
+	call s:send(a:server["job"], s:format(a:method, a:params, l:id))
+
+	if a:hdlr == v:none
+		return s:sync_request_wait(l:req)
+	endif
 endfunction
 "}}}
 
