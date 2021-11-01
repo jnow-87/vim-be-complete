@@ -1,4 +1,16 @@
 """"
+"" local variables
+""""
+
+"{{{
+let s:notification_hdlrs = {
+\	"textDocument/publishDiagnostics": "s:diag_hdlr",
+\	"default": "s:default_notification_hdlr",
+\ }
+"}}}
+
+
+""""
 "" local functions
 """"
 
@@ -21,6 +33,29 @@ endfunction
 function s:send(job, data)
 	let l:data_j = json_encode(a:data)
 	call ch_sendraw(a:job, "Content-Length: " . len(l:data_j) . "\r\n\r\n" . l:data_j)
+endfunction
+"}}}
+
+"{{{
+function s:parse_uri(uri)
+	return matchstr(a:uri, '.*://\zs.*\ze')
+endfunction
+"}}}
+
+"{{{
+function s:parse_range(msg)
+	let l:range = get(a:msg, "range", {
+	\		"start": { "line": 0, "character": 0 },
+	\		"end": { "line": 0, "character": 0}
+	\	}
+	\ )
+
+	return {
+	\	"start_line": l:range["start"]["line"] + 1,
+	\	"start_char": l:range["start"]["character"] + 1,
+	\	"end_line": l:range["end"]["line"] + 1,
+	\	"end_char": l:range["end"]["character"] + 1
+	\ }
 endfunction
 "}}}
 
@@ -51,6 +86,72 @@ function s:sync_request_wait(request)
 endfunction
 "}}}
 
+"{{{
+function s:default_notification_hdlr(server, content)
+	call becomplete#debug#print("drop server message: " . string(a:content))
+endfunction
+"}}}
+
+"{{{
+function s:diag_hdlr(server, content)
+	try
+		let l:file = s:parse_uri(a:content["params"]["uri"])
+
+		for l:diag in a:content["params"]["diagnostics"]
+			let l:range = s:parse_range(l:diag)
+			let l:msg = l:diag["message"]
+
+			call becomplete#debug#print(
+			\	"diagnostic message: " . l:file . ":"
+			\	. l:range["start_line"] . ":" . l:range["start_char"]
+			\	. " " . l:msg
+			\ )
+		endfor
+
+	catch
+		call becomplete#debug#print("unknown diag message format: " . string(a:content))
+	endtry
+endfunction
+"}}}
+
+"{{{
+function s:handle_notification(server, content)
+	let l:method = get(a:content, "method", "default")
+
+	if !has_key(s:notification_hdlrs, l:method)
+		let l:method = "default"
+	endif
+
+	call function(s:notification_hdlrs[l:method])(a:server, a:content)
+endfunction
+"}}}
+
+"{{{
+function s:handle_message(server, content)
+	try
+		let l:id = a:content["id"]
+		let l:request = a:server["requests"][l:id]
+		let l:result = a:content["result"]
+
+		call l:request["hdlr"](a:server, l:result, l:id)
+
+	catch /^Vim(let):E716.*\"id\"/
+		call s:handle_notification(a:server, a:content)
+
+	catch /^Vim(let):E716.*\"result\"/
+		call becomplete#debug#error("request \"" . l:request["method"] . "\": " . a:content["error"]["message"])
+
+	catch /^Vim(let):E716.*\"\d\+\"/
+		call becomplete#debug#error("missing request data for id " . l:id)
+
+	finally
+		if exists("l:id")
+			unlet a:server["requests"][l:id]
+		endif
+	endtry
+endfunction
+"}}}
+
 
 """"
 "" global functions
@@ -71,35 +172,14 @@ function becomplete#lsp#base#rx_hdlr(channel, msg)
 		let l:content_len = str2nr(split(l:hdr, ":")[1])
 		let l:content = len(l:parts) > 1 ? l:parts[1][:l:content_len - 1] : ""
 
-		" handle complete messages and return if only an incomplete remains
+		" return on incomplete message
 		if len(l:content) != l:content_len
 			break
 		endif
 
+		" handle message and remove it from the server
+		call s:handle_message(l:server, json_decode(l:content))
 		let l:server["data"] = l:server["data"][len(l:parts[0]) + 4 + l:content_len:]
-		let l:content = json_decode(l:content)
-
-		try
-			let l:id = l:content["id"]
-			let l:request = l:server["requests"][l:id]
-			let l:result = l:content["result"]
-
-			call l:request["hdlr"](l:server, l:result, l:id)
-
-		catch /^Vim(let):E716.*\"id\"/
-			call becomplete#debug#print("drop server message: " . string(l:content))
-
-		catch /^Vim(let):E716.*\"result\"/
-			call becomplete#debug#error("request \"" . l:request["method"] . "\": " . l:content["error"]["message"])
-
-		catch /^Vim(let):E716.*\"\d\+\"/
-			call becomplete#debug#error("missing request data for id " . l:id)
-
-		finally
-			if exists("l:id")
-				unlet l:server["requests"][l:id]
-			endif
-		endtry
 	endwhile
 endfunction
 "}}}
