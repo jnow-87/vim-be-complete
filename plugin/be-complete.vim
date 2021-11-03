@@ -1,4 +1,4 @@
-if exists('g:loaded_becomplete') || &compatible
+if exists('g:loaded_becomplete') || &diff || &compatible
 	finish
 endif
 
