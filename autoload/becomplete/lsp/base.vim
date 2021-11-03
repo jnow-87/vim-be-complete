@@ -61,7 +61,7 @@ endfunction
 
 "{{{
 function s:sync_request_hdlr(server, result, request_id)
-	call becomplete#debug#print("sync hdlr " . a:request_id . " " . string(a:result))
+	call becomplete#log#msg("sync hdlr " . a:request_id . " " . string(a:result))
 
 	let l:req = a:server["requests"][a:request_id]
 	let l:req["result"] = a:result
@@ -77,7 +77,7 @@ function s:sync_request_wait(request)
 		let l:retry += 1
 
 		if l:retry > 200
-			call becomplete#debug#print("timeout on request " . a:request["method"])
+			call becomplete#log#msg("timeout on request " . a:request["method"])
 			return { "error": { "message": "request timeout" }}
 		endif
 	endwhile
@@ -88,7 +88,7 @@ endfunction
 
 "{{{
 function s:default_notification_hdlr(server, content)
-	call becomplete#debug#print("drop server message: " . string(a:content))
+	call becomplete#log#msg("drop server message: " . string(a:content))
 endfunction
 "}}}
 
@@ -101,7 +101,7 @@ function s:diag_hdlr(server, content)
 			let l:range = s:parse_range(l:diag)
 			let l:msg = l:diag["message"]
 
-			call becomplete#debug#print(
+			call becomplete#log#msg(
 			\	"diagnostic message: " . l:file . ":"
 			\	. l:range["start_line"] . ":" . l:range["start_char"]
 			\	. " " . l:msg
@@ -109,7 +109,7 @@ function s:diag_hdlr(server, content)
 		endfor
 
 	catch
-		call becomplete#debug#print("unknown diag message format: " . string(a:content))
+		call becomplete#log#msg("unknown diag message format: " . string(a:content))
 	endtry
 endfunction
 "}}}
@@ -139,10 +139,10 @@ function s:handle_message(server, content)
 		call s:handle_notification(a:server, a:content)
 
 	catch /^Vim(let):E716.*\"result\"/
-		call becomplete#debug#error("request \"" . l:request["method"] . "\": " . a:content["error"]["message"])
+		call becomplete#log#error("request \"" . l:request["method"] . "\": " . a:content["error"]["message"])
 
 	catch /^Vim(let):E716.*\"\d\+\"/
-		call becomplete#debug#error("missing request data for id " . l:id)
+		call becomplete#log#error("missing request data for id " . l:id)
 
 	finally
 		if exists("l:id")
@@ -187,7 +187,7 @@ endfunction
 "{{{
 function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	if job_status(a:server["job"]) != "run" || (a:server["initialised"] != 1 && a:method != "initialize")
-		call becomplete#debug#error("request \"" . a:method . "\": server not initialised")
+		call becomplete#log#error("request \"" . a:method . "\": server not initialised")
 		return {}
 	endif
 
@@ -211,7 +211,7 @@ endfunction
 "{{{
 function becomplete#lsp#base#notification(server, method, params)
 	if a:server["initialised"] != 1 && a:method != "initialized"
-		call becomplete#debug#error("notification \"" . a:method . "\": server not initialised")
+		call becomplete#log#error("notification \"" . a:method . "\": server not initialised")
 		return
 	endif
 

@@ -42,7 +42,7 @@ let s:complete_kinds = [
 function s:item_filter(result)
 	let l:items = []
 
-	call becomplete#debug#print(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
+	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
 	\	"label", "kind", "detail", "ldetail", "insert", "command", "select", "data", "docu", "edit")
 	\ )
 
@@ -60,7 +60,7 @@ function s:item_filter(result)
 		let l:data = get(l:item, "data", "")
 		let l:edit = get(l:item, "textEdit", "")
 
-		call becomplete#debug#print(printf("%20.20s %10.10s %10.10s %10.10s %14.14s %10.10s %15.15s %6.6s %10.10s %s %s",
+		call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %10.10s %14.14s %10.10s %15.15s %6.6s %10.10s %s %s",
 		\	l:label, l:kind, l:detail, l:ldetail, l:ldetail_descr, l:insert, l:cmd, l:select, l:data, l:docu, l:edit)
 		\ )
 
@@ -99,7 +99,7 @@ function becomplete#lsp#complete#async(file, line, column)
 	\	"character": a:column - 1
 	\ }
 
-	call becomplete#debug#print("completion for " . a:file . ":" . a:line . ":" . a:column)
+	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 	call becomplete#lsp#base#request(l:server, "textDocument/completion", l:p, function("s:complete_hdlr"))
 endfunction
 "}}}
@@ -115,7 +115,7 @@ function becomplete#lsp#complete#sync(file, line, column)
 	\	"character": a:column - 1
 	\ }
 
-	call becomplete#debug#print("completion for " . a:file . ":" . a:line . ":" . a:column)
+	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 	let l:res = becomplete#lsp#base#request(l:server, "textDocument/completion", l:p)
 
 	return s:item_filter(l:res)

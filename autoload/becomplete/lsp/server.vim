@@ -31,7 +31,7 @@ function s:server_start(filetype)
 	let l:server = get(s:server_types, a:filetype, {})
 
 	if l:server == {}
-		call becomplete#debug#error("no server registerd for filetype " . a:filetype)
+		call becomplete#log#error("no server registerd for filetype " . a:filetype)
 		return
 	endif
 
@@ -39,7 +39,7 @@ function s:server_start(filetype)
 		return
 	endif
 
-	call becomplete#debug#print("starting " . a:filetype . " language server: " . l:server["command"][0])
+	call becomplete#log#msg("starting " . a:filetype . " language server: " . l:server["command"][0])
 
 	" start language server as vim job
 	let l:opts = {}
@@ -51,7 +51,7 @@ function s:server_start(filetype)
 
 	" TODO handle errors
 	let l:job = job_start(l:server["command"], l:opts)
-	call becomplete#debug#print("server job id: " . l:job)
+	call becomplete#log#msg("server job id: " . l:job)
 
 	let l:server["job"] = l:job
 	let s:server_jobs[l:job] = l:server
@@ -78,7 +78,7 @@ function s:server_start(filetype)
 	let l:res = becomplete#lsp#base#request(l:server, "initialize", l:p)
 
 	if l:res != {} && !has_key(l:res, "error")
-		call becomplete#debug#print("server initialised ")
+		call becomplete#log#msg("server initialised ")
 		call becomplete#lsp#base#notification(l:server, "initialized", {})
 		let l:server["initialised"] = 1
 
@@ -88,7 +88,7 @@ function s:server_start(filetype)
 
 	else
 		let l:err = get(l:res, "error", { "message": "unknown error" })
-		call becomplete#debug#error("server initialisation failed: " . l:err["message"])
+		call becomplete#log#error("server initialisation failed: " . l:err["message"])
 		let l:server["initialised"] = -1
 	endif
 endfunction
@@ -102,7 +102,7 @@ function s:close_hdlr(channel)
 	let l:server = get(s:server_jobs, l:job, {})
 
 	if l:server != {}
-		call becomplete#debug#error("server closed for filetypes " . string(l:server["filetypes"]))
+		call becomplete#log#error("server closed for filetypes " . string(l:server["filetypes"]))
 
 		unlet s:server_jobs[l:job]
 		let l:server["initialised"] = -1
@@ -121,14 +121,14 @@ function becomplete#lsp#server#register(cmd, filetypes)
 
 	for l:ftype in a:filetypes
 		if !has_key(s:server_types, l:ftype)
-			call becomplete#debug#print("register server for " . l:ftype)
+			call becomplete#log#msg("register server for " . l:ftype)
 
 			let l:server["filetypes"] += [ l:ftype ]
 			let s:server_types[l:ftype] = l:server
 
 			exec "autocmd BeComplete FileType " . l:ftype . " call s:server_start(\"" . l:ftype . "\")"
 		else
-			call becomplete#debug#error("server for filetype " . l:ftype . " already registered")
+			call becomplete#log#error("server for filetype " . l:ftype . " already registered")
 		endif
 	endfor
 endfunction
@@ -137,13 +137,13 @@ endfunction
 "{{{
 function becomplete#lsp#server#stop_all()
 	for l:server in values(s:server_jobs)
-		call becomplete#debug#print("trigger server shutdown: " . l:server["command"][0])
+		call becomplete#log#msg("trigger server shutdown: " . l:server["command"][0])
 		let l:res = becomplete#lsp#base#request(l:server, "shutdown", {})
 
 		if l:res == v:null
 			let l:job = l:server["job"]
 
-			call becomplete#debug#print("server shutdown")
+			call becomplete#log#msg("server shutdown")
 			call becomplete#lsp#base#notification(l:server, "exit", {})
 
 			call job_stop(l:job)
@@ -151,7 +151,7 @@ function becomplete#lsp#server#stop_all()
 			let l:server["initialised"] = 0
 
 		else
-			call becomplete#debug#error("server shutdown failed: " . l:server["command"])
+			call becomplete#log#error("server shutdown failed: " . l:server["command"])
 		endif
 	endfor
 endfunction

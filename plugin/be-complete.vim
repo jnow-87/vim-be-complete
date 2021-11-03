@@ -42,11 +42,15 @@ endfunction
 
 "{{{
 function s:init_buffer()
+	let l:server = becomplete#lsp#server#get("")
+
 	" function argument highlighting
-	exec "syn region becomplete_arg matchgroup=None "
-	\	. "start='" . g:becomplete_arg_mark_left
-	\	. "' end='" . g:becomplete_arg_mark_right
-	\	. "' concealends"
+	if l:server["command"] != []
+		exec "syn region becomplete_arg matchgroup=None "
+		\	. "start='" . g:becomplete_arg_mark_left
+		\	. "' end='" . g:becomplete_arg_mark_right
+		\	. "' concealends"
+	endif
 
 	" user-triggered completion
 	call util#map#i(g:becomplete_key_complete,
@@ -96,7 +100,7 @@ call s:init()
 """"
 
 "{{{
-command -nargs=0 BeCompleteDebug let g:becomplete_debug = 1 | call becomplete#debug#show()
+command -nargs=0 BeCompleteLog let g:becomplete_log_verbose = 1 | call becomplete#log#show()
 "}}}
 
 
