@@ -7,7 +7,7 @@ function becomplete#complete#find_start()
     let l:line = getline('.')
     let l:start = col('.') - 1
 
-    while l:start > 0 && l:line[l:start - 1] =~ '\i'
+    while l:start > 0 && l:line[l:start - 1] =~ '\i\|\k'
       let l:start -= 1
     endwhile
 
