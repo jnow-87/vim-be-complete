@@ -1,13 +1,4 @@
 """"
-"" global variables
-""""
-
-"{{{
-let g:becomplete_log_verbose = get(g:, "becomplete_log_verbose", 0)
-"}}}
-
-
-""""
 "" local variables
 """"
 

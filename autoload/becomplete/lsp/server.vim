@@ -47,7 +47,7 @@ function s:server_start(filetype)
 	let l:opts["in_mode"] = "raw"
 	let l:opts["out_mode"] = "raw"
 	let l:opts["out_cb"] = "becomplete#lsp#base#rx_hdlr"
-	let l:opts["err_io"] = "null"
+	let l:opts["err_cb"] = function("s:error_hdlr")
 
 	" TODO handle errors
 	let l:job = job_start(l:server["command"], l:opts)
@@ -107,6 +107,12 @@ function s:close_hdlr(channel)
 		unlet s:server_jobs[l:job]
 		let l:server["initialised"] = -1
 	endif
+endfunction
+"}}}
+
+"{{{
+function s:error_hdlr(channel, msg)
+	call becomplete#log#msg("stderr: " . a:msg)
 endfunction
 "}}}
 

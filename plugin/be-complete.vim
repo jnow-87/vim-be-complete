@@ -10,13 +10,18 @@ let g:loaded_becomplete = 1
 """"
 
 let g:becomplete_language_servers = get(g:, "becomplete_language_servers", [])
+let g:becomplete_language_triggers = {}
+
+let g:becomplete_log_verbose = get(g:, "becomplete_log_verbose", 0)
+
 let g:becomplete_key_complete = get(g:, "becomplete_key_complete", "<tab>")
 let g:becomplete_key_complete_prev = get(g:, "becomplete_key_complete_prev", "<s-tab>")
 let g:becomplete_key_arg_next = get(g:, "becomplete_key_arg_next", "<c-n>")
 let g:becomplete_key_arg_prev = get(g:, "becomplete_key_arg_prev", "<c-p>")
+
 let g:becomplete_arg_mark_left = "`<"
 let g:becomplete_arg_mark_right = ">`"
-let g:becomplete_language_triggers = {}
+
 
 
 """"
