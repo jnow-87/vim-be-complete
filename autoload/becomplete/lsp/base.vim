@@ -78,7 +78,7 @@ function s:sync_request_wait(request)
 
 		if l:retry > 200
 			call becomplete#log#msg("timeout on request " . a:request["method"])
-			return { "error": { "message": "request timeout" }}
+			return {}
 		endif
 	endwhile
 

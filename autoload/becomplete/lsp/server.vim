@@ -77,7 +77,7 @@ function s:server_start(filetype)
 
 	let l:res = becomplete#lsp#base#request(l:server, "initialize", l:p)
 
-	if l:res != {} && !has_key(l:res, "error")
+	if l:res != {}
 		call becomplete#log#msg("server initialised ")
 		call becomplete#lsp#base#notification(l:server, "initialized", {})
 		let l:server["initialised"] = 1
@@ -87,8 +87,7 @@ function s:server_start(filetype)
 		endfor
 
 	else
-		let l:err = get(l:res, "error", { "message": "unknown error" })
-		call becomplete#log#error("server initialisation failed: " . l:err["message"])
+		call becomplete#log#error("server initialisation failed")
 		let l:server["initialised"] = -1
 	endif
 endfunction
