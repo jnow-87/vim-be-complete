@@ -37,29 +37,6 @@ endfunction
 "}}}
 
 "{{{
-function s:parse_uri(uri)
-	return matchstr(a:uri, '.*://\zs.*\ze')
-endfunction
-"}}}
-
-"{{{
-function s:parse_range(msg)
-	let l:range = get(a:msg, "range", {
-	\		"start": { "line": 0, "character": 0 },
-	\		"end": { "line": 0, "character": 0}
-	\	}
-	\ )
-
-	return {
-	\	"start_line": l:range["start"]["line"] + 1,
-	\	"start_char": l:range["start"]["character"] + 1,
-	\	"end_line": l:range["end"]["line"] + 1,
-	\	"end_char": l:range["end"]["character"] + 1
-	\ }
-endfunction
-"}}}
-
-"{{{
 function s:sync_request_hdlr(server, result, request_id)
 	call becomplete#log#msg("sync hdlr " . a:request_id . " " . string(a:result))
 
@@ -95,15 +72,15 @@ endfunction
 "{{{
 function s:diag_hdlr(server, content)
 	try
-		let l:file = s:parse_uri(a:content["params"]["uri"])
+		let l:file = becomplete#lsp#response#uri(a:content["params"])
 
 		for l:diag in a:content["params"]["diagnostics"]
-			let l:range = s:parse_range(l:diag)
+			let [l:line, l:col, _, _] = becomplete#lsp#response#range(l:diag)
 			let l:msg = l:diag["message"]
 
 			call becomplete#log#msg(
 			\	"diagnostic message: " . l:file . ":"
-			\	. l:range["start_line"] . ":" . l:range["start_char"]
+			\	. l:line . ":" . l:col
 			\	. " " . l:msg
 			\ )
 		endfor

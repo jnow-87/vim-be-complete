@@ -90,33 +90,26 @@ endfunction
 
 "{{{
 function becomplete#lsp#complete#async(file, line, column)
-	let l:server = becomplete#lsp#server#get(a:file)
-
-	let l:p = {}
-	let l:p["textDocument"] = { "uri": "file://" . a:file }
-	let l:p["position"] = {
-	\	"line": a:line - 1,
-	\	"character": a:column - 1
-	\ }
-
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
-	call becomplete#lsp#base#request(l:server, "textDocument/completion", l:p, function("s:complete_hdlr"))
+
+	call becomplete#lsp#base#request(
+	\	becomplete#lsp#server#get(a:file),
+	\	"textDocument/completion",
+	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column),
+	\	function("s:complete_hdlr")
+	\ )
 endfunction
 "}}}
 
 "{{{
 function becomplete#lsp#complete#sync(file, line, column)
-	let l:server = becomplete#lsp#server#get(a:file)
-
-	let l:p = {}
-	let l:p["textDocument"] = { "uri": "file://" . a:file }
-	let l:p["position"] = {
-	\	"line": a:line - 1,
-	\	"character": a:column - 1
-	\ }
-
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
-	let l:res = becomplete#lsp#base#request(l:server, "textDocument/completion", l:p)
+
+	let l:res = becomplete#lsp#base#request(
+	\	becomplete#lsp#server#get(a:file),
+	\	"textDocument/completion",
+	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
+	\ )
 
 	return s:item_filter(l:res)
 endfunction
