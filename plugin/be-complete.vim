@@ -18,9 +18,16 @@ let g:becomplete_key_complete = get(g:, "becomplete_key_complete", "<tab>")
 let g:becomplete_key_complete_prev = get(g:, "becomplete_key_complete_prev", "<s-tab>")
 let g:becomplete_key_arg_next = get(g:, "becomplete_key_arg_next", "<c-n>")
 let g:becomplete_key_arg_prev = get(g:, "becomplete_key_arg_prev", "<c-p>")
+let g:becomplete_key_goto = get(g:, "becomplete_key_goto", "gt")
+let g:becomplete_key_goto_preview_close = get(g:, "becomplete_key_goto_preview_close", "q")
+let g:becomplete_key_goto_preview_expand = get(g:, "becomplete_key_goto_preview_expand", "x")
 
 let g:becomplete_arg_mark_left = "`<"
 let g:becomplete_arg_mark_right = ">`"
+
+let g:becomplete_goto_menu_always = get(g:, "becomplete_goto_menu_always", 1)
+let g:becomplete_goto_default = get(g:, "becomplete_goto_default", "split")
+let g:becomplete_goto_preview_width = get(g:, "becomplete_goto_preview_width", (&columns / 5))
 
 
 
@@ -89,6 +96,9 @@ function s:init_buffer()
 	" "<esc><right>" is required to avoid ending up in "insert select" mode
 	autocmd BeComplete CompleteDone <buffer>
 	\	if becomplete#complete#arg_select(1) == 0 | call feedkeys("\<esc>\<right>") | endif
+
+	" goto
+	call util#map#n(g:becomplete_key_goto, "<insert><c-r>=becomplete#goto#decldef()<cr>", "<buffer>")
 endfunction
 "}}}
 
