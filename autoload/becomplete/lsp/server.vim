@@ -16,13 +16,26 @@ let s:server_jobs = {}
 function s:server(cmd=[], filetypes=[])
 	return {
 	\	"initialised": 0,
+	\
 	\	"command": a:cmd,
 	\	"job": "",
 	\	"filetypes": a:filetypes,
 	\	"request-id": 0,
 	\	"requests": {},
 	\	"data": "",
+	\
+	\	"complete": function("becomplete#lsp#response#unavail_list"),
+	\	"goto_decl": function("becomplete#lsp#response#unavail_list"),
+	\	"goto_def": function("becomplete#lsp#response#unavail_list"),
 	\ }
+endfunction
+"}}}
+
+"{{{
+function s:server_capabilities(server, capabilities)
+	if has_key(a:capabilities, "completionProvider") |	let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
+	if has_key(a:capabilities, "declarationProvider") |	let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
+	if has_key(a:capabilities, "definitionProvider") |	let a:server["goto_def"] = function("becomplete#lsp#goto#definition") | endif
 endfunction
 "}}}
 
@@ -78,7 +91,9 @@ function s:server_start(filetype)
 	let l:res = becomplete#lsp#base#request(l:server, "initialize", l:p)
 
 	if l:res != {}
-		call becomplete#log#msg("server initialised ")
+		call s:server_capabilities(l:server, l:res["capabilities"])
+
+		call becomplete#log#msg("server initialised")
 		call becomplete#lsp#base#notification(l:server, "initialized", {})
 		let l:server["initialised"] = 1
 

@@ -110,7 +110,7 @@ function becomplete#complete#on_user()
 		let l:file = expand("%:p")
 
 		call becomplete#lsp#document#open(l:file)
-		call becomplete#lsp#complete#async(l:file, line("."), col("."))
+		call l:server["complete"](l:file, line("."), col("."))
 		call becomplete#lsp#document#close(l:file)
 
 		return ""

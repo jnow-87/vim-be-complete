@@ -3,6 +3,12 @@
 """"
 
 "{{{
+function becomplete#lsp#response#unavail_list(...)
+	return []
+endfunction
+"}}}
+
+"{{{
 function becomplete#lsp#response#ensure_list(response)
 	return (type(a:response) == type({})) ? [ a:response ] : a:response
 endfunction

@@ -138,10 +138,11 @@ function becomplete#goto#decldef()
 	let l:file = expand("%:p")
 	let l:line = line(".")
 	let l:col = col(".")
+	let l:server = becomplete#lsp#server#get(l:file)
 
 	call becomplete#lsp#document#open(l:file)
-	let l:defs = becomplete#lsp#goto#definition(l:file, l:line, l:col)
-	let l:decls = becomplete#lsp#goto#declaration(l:file, l:line, l:col)
+	let l:defs = l:server["goto_def"](l:file, l:line, l:col)
+	let l:decls = l:server["goto_decl"](l:file, l:line, l:col)
 	call becomplete#lsp#document#close(l:file)
 
 	return s:goto(
