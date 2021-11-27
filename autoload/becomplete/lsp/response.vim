@@ -10,7 +10,11 @@ endfunction
 
 "{{{
 function becomplete#lsp#response#ensure_list(response)
-	return (type(a:response) == type({})) ? [ a:response ] : a:response
+	if type(a:response) == type(v:null)
+		return []
+	endif
+
+	return (type(a:response) != type([])) ? [ a:response ] : a:response
 endfunction
 "}}}
 

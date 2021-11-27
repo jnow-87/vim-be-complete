@@ -27,15 +27,17 @@ function s:server(cmd=[], filetypes=[])
 	\	"complete": function("becomplete#lsp#response#unavail_list"),
 	\	"goto_decl": function("becomplete#lsp#response#unavail_list"),
 	\	"goto_def": function("becomplete#lsp#response#unavail_list"),
+	\	"symbols": function("becomplete#lsp#response#unavail_list"),
 	\ }
 endfunction
 "}}}
 
 "{{{
 function s:server_capabilities(server, capabilities)
-	if has_key(a:capabilities, "completionProvider") |	let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
-	if has_key(a:capabilities, "declarationProvider") |	let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
-	if has_key(a:capabilities, "definitionProvider") |	let a:server["goto_def"] = function("becomplete#lsp#goto#definition") | endif
+	if has_key(a:capabilities, "completionProvider") |		let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
+	if has_key(a:capabilities, "declarationProvider") |		let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
+	if has_key(a:capabilities, "definitionProvider") |		let a:server["goto_def"] = function("becomplete#lsp#goto#definition") | endif
+	if has_key(a:capabilities, "documentSymbolProvider") |	let a:server["symbols"] = function("becomplete#lsp#symbol#file") | endif
 endfunction
 "}}}
 
@@ -79,12 +81,15 @@ function s:server_start(filetype)
 	let l:p["capabilities"] = {
 	\	"textDocument": {
 	\		"publishDiagnostics": {
-	\			"relatedInformation": "false",
-	\			"versionSupport": "false",
-	\			"codeDescriptionSupport": "false",
-	\			"dataSupport": "false",
+	\			"relatedInformation": v:false,
+	\			"versionSupport": v:false,
+	\			"codeDescriptionSupport": v:false,
+	\			"dataSupport": v:false,
 	\			"tagSupport": { "valueSet": "" },
-	\		}
+	\		},
+	\		"documentSymbol": {
+	\			"hierarchicalDocumentSymbolSupport": v:false,
+	\		},
 	\	}
 	\ }
 
