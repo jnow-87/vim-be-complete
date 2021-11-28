@@ -88,6 +88,14 @@ function s:server_start(filetype)
 	\			"dataSupport": v:false,
 	\			"tagSupport": { "valueSet": "" },
 	\		},
+	\		"declaration": {
+	\			"dynamicRegistration": v:false,
+	\			"linkSupport": v:false,
+	\		},
+	\		"definition": {
+	\			"dynamicRegistration": v:false,
+	\			"linkSupport": v:false,
+	\		},
 	\		"documentSymbol": {
 	\			"hierarchicalDocumentSymbolSupport": v:false,
 	\		},

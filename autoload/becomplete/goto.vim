@@ -109,25 +109,6 @@ function s:goto(items)
 endfunction
 "}}}
 
-"{{{
-function s:parse_items(items, type)
-	let l:lst = []
-
-	for l:item in a:items
-		let l:file = becomplete#lsp#response#uri(l:item)
-		let l:line = becomplete#lsp#response#range(l:item)[0]
-
-		if l:file == "" || l:line == -1
-			continue
-		endif
-
-		let l:lst += [{ "file": l:file, "line": l:line, "type": a:type }]
-	endfor
-
-	return l:lst
-endfunction
-"}}}
-
 
 """"
 "" global functions
@@ -145,9 +126,6 @@ function becomplete#goto#decldef()
 	let l:decls = l:server["goto_decl"](l:file, l:line, l:col)
 	call becomplete#lsp#document#close(l:file)
 
-	return s:goto(
-	\	s:parse_items(l:defs, "def")
-	\	+ s:parse_items(l:decls, "decl")
-	\ )
+	return s:goto(l:defs + l:decls)
 endfunction
 "}}}
