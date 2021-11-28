@@ -53,6 +53,10 @@ function s:parse(response, kinds=[])
 			\	"detail": l:detail,
 			\ }]
 		endif
+
+		if has_key(l:item, "children")
+			let l:items += s:parse(l:item["children"], a:kinds)
+		endif
 	endfor
 
 	return l:items

@@ -97,7 +97,10 @@ function s:server_start(filetype)
 	\			"linkSupport": v:false,
 	\		},
 	\		"documentSymbol": {
-	\			"hierarchicalDocumentSymbolSupport": v:false,
+	\			"dynamicRegistration": v:false,
+	\			"hierarchicalDocumentSymbolSupport": v:true,
+	\			"tagSupport": v:false,
+	\			"labelSupport": v:false,
 	\		},
 	\	}
 	\ }
