@@ -88,6 +88,24 @@ function s:server_start(filetype)
 	\			"dataSupport": v:false,
 	\			"tagSupport": { "valueSet": "" },
 	\		},
+	\		"completion": {
+	\			"dynamicRegistration": v:false,
+	\			"completionItem": {
+	\				"snippetSupport": v:false,
+	\				"commitCharactersSupport": v:false,
+	\				"documentationFormat": [ "plaintext" ],
+	\				"deprecatedSupport": v:false,
+	\				"preselectSupport": v:false,
+	\				"insertReplaceSupport": v:false,
+	\				"resolveSupport": [],
+	\				"insertTextModeSupport": {
+	\					"valueSet": [ 1 ],
+	\				},
+	\				"labelDetailsSupport": v:true,
+	\			},
+	\			"contextSupport": v:false,
+	\			"insertTextMode": 1,
+	\		},
 	\		"declaration": {
 	\			"dynamicRegistration": v:false,
 	\			"linkSupport": v:false,

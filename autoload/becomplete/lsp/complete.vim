@@ -39,14 +39,15 @@ let s:complete_kinds = [
 """"
 
 "{{{
-function s:item_filter(result)
-	let l:items = []
+function s:item_filter(items)
+	let l:items = (type(a:items) == type(v:null)) ? [] : get(a:items, "items", a:items)
+	let l:lst = []
 
 	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
 	\	"label", "kind", "detail", "ldetail", "insert", "command", "select", "data", "docu", "edit")
 	\ )
 
-	for l:item in a:result["items"]
+	for l:item in l:items
 		let l:label = trim(get(l:item, "label", ""), " ")
 		let l:ldetail = get(l:item, "labelDetails", {})
 		let l:ldetail_descr = get(l:ldetail, "description", "")
@@ -64,7 +65,7 @@ function s:item_filter(result)
 		\	l:label, l:kind, l:detail, l:ldetail, l:ldetail_descr, l:insert, l:cmd, l:select, l:data, l:docu, l:edit)
 		\ )
 
-		call add(l:items, {
+		call add(l:lst, {
 		\		"abbr": l:insert,
 		\		"word": becomplete#complete#arg_annotate(l:label),
 		\		"kind": l:kind,
@@ -73,7 +74,7 @@ function s:item_filter(result)
 		\ )
 	endfor
 
-	return l:items
+	return l:lst
 endfunction
 "}}}
 
