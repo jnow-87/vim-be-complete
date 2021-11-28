@@ -54,6 +54,8 @@ function s:init()
 	\	s:config_str("g:becomplete_arg_mark_left", " "),
 	\	s:config_str("g:becomplete_arg_mark_right", " "),
 	\	"",
+	\	s:config_str("g:becomplete_complete_fallback", " "),
+	\	"",
 	\	s:config_str("g:becomplete_goto_menu_always", " "),
 	\	s:config_str("g:becomplete_goto_default", " "),
 	\	s:config_str("g:becomplete_goto_preview_width", " "),

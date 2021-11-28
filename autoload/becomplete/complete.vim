@@ -140,7 +140,7 @@ function becomplete#complete#on_user()
 		return ""
 
 	else
-		return "\<c-x>\<c-n>"
+		return util#key#escape(g:becomplete_complete_fallback)
 	endif
 endfunction
 "}}}

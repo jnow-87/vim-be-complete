@@ -29,6 +29,9 @@ let g:becomplete_key_symbol_funchead = get(g:, "becomplete_key_symbol_funchead",
 let g:becomplete_arg_mark_left = "`<"
 let g:becomplete_arg_mark_right = ">`"
 
+" vim completion key sequence to use when no language server is available
+let g:becomplete_complete_fallback = get(g:, "becomplete_complete_fallback", "<c-n>")
+
 " always show a menu for goto commands, even if a single item will be shown
 let g:becomplete_goto_menu_always = get(g:, "becomplete_goto_menu_always", 1)
 
