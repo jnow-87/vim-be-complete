@@ -13,16 +13,32 @@ let s:server_jobs = {}
 """"
 
 "{{{
-function s:server(cmd=[], filetypes=[])
+function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	return {
 	\	"initialised": 0,
+	\
 	\	"command": a:cmd,
 	\	"job": "",
 	\	"filetypes": a:filetypes,
+	\	"timeout-ms": a:timeout_ms,
 	\	"request-id": 0,
 	\	"requests": {},
 	\	"data": "",
+	\
+	\	"complete": function("becomplete#lsp#response#unavail_list"),
+	\	"goto_decl": function("becomplete#lsp#response#unavail_list"),
+	\	"goto_def": function("becomplete#lsp#response#unavail_list"),
+	\	"symbols": function("becomplete#lsp#response#unavail_list"),
 	\ }
+endfunction
+"}}}
+
+"{{{
+function s:server_capabilities(server, capabilities)
+	if has_key(a:capabilities, "completionProvider") |		let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
+	if has_key(a:capabilities, "declarationProvider") |		let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
+	if has_key(a:capabilities, "definitionProvider") |		let a:server["goto_def"] = function("becomplete#lsp#goto#definition") | endif
+	if has_key(a:capabilities, "documentSymbolProvider") |	let a:server["symbols"] = function("becomplete#lsp#symbol#file") | endif
 endfunction
 "}}}
 
@@ -47,7 +63,7 @@ function s:server_start(filetype)
 	let l:opts["in_mode"] = "raw"
 	let l:opts["out_mode"] = "raw"
 	let l:opts["out_cb"] = "becomplete#lsp#base#rx_hdlr"
-	let l:opts["err_io"] = "null"
+	let l:opts["err_cb"] = function("s:error_hdlr")
 
 	" TODO handle errors
 	let l:job = job_start(l:server["command"], l:opts)
@@ -66,19 +82,24 @@ function s:server_start(filetype)
 	let l:p["capabilities"] = {
 	\	"textDocument": {
 	\		"publishDiagnostics": {
-	\			"relatedInformation": "false",
-	\			"versionSupport": "false",
-	\			"codeDescriptionSupport": "false",
-	\			"dataSupport": "false",
+	\			"relatedInformation": v:false,
+	\			"versionSupport": v:false,
+	\			"codeDescriptionSupport": v:false,
+	\			"dataSupport": v:false,
 	\			"tagSupport": { "valueSet": "" },
-	\		}
+	\		},
+	\		"documentSymbol": {
+	\			"hierarchicalDocumentSymbolSupport": v:false,
+	\		},
 	\	}
 	\ }
 
 	let l:res = becomplete#lsp#base#request(l:server, "initialize", l:p)
 
-	if l:res != {} && !has_key(l:res, "error")
-		call becomplete#log#msg("server initialised ")
+	if l:res != {}
+		call s:server_capabilities(l:server, l:res["capabilities"])
+
+		call becomplete#log#msg("server initialised")
 		call becomplete#lsp#base#notification(l:server, "initialized", {})
 		let l:server["initialised"] = 1
 
@@ -87,8 +108,7 @@ function s:server_start(filetype)
 		endfor
 
 	else
-		let l:err = get(l:res, "error", { "message": "unknown error" })
-		call becomplete#log#error("server initialisation failed: " . l:err["message"])
+		call becomplete#log#error("server initialisation failed")
 		let l:server["initialised"] = -1
 	endif
 endfunction
@@ -110,14 +130,20 @@ function s:close_hdlr(channel)
 endfunction
 "}}}
 
+"{{{
+function s:error_hdlr(channel, msg)
+	call becomplete#log#msg("stderr: " . a:msg)
+endfunction
+"}}}
+
 
 """"
 "" global functions
 """"
 
 "{{{
-function becomplete#lsp#server#register(cmd, filetypes)
-	let l:server = s:server(a:cmd, [])
+function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
+	let l:server = s:server(a:cmd, [], a:timeout_ms)
 
 	for l:ftype in a:filetypes
 		if !has_key(s:server_types, l:ftype)

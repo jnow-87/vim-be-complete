@@ -7,7 +7,7 @@ function becomplete#complete#find_start()
     let l:line = getline('.')
     let l:start = col('.') - 1
 
-    while l:start > 0 && l:line[l:start - 1] =~ '\i'
+    while l:start > 0 && l:line[l:start - 1] =~ '\i\|\k'
       let l:start -= 1
     endwhile
 
@@ -110,7 +110,7 @@ function becomplete#complete#on_user()
 		let l:file = expand("%:p")
 
 		call becomplete#lsp#document#open(l:file)
-		call becomplete#lsp#complete#async(l:file, line("."), col("."))
+		call l:server["complete"](l:file, line("."), col("."))
 		call becomplete#lsp#document#close(l:file)
 
 		return ""

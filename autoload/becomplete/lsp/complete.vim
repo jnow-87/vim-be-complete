@@ -4,33 +4,33 @@
 
 "{{{
 let s:complete_kinds = [
-\	"t",
-\	"f", 
-\	"f",
-\	"f",
-\	"~",
-\	"m",
-\	"v",
-\	"t",
-\	"t",
-\	":",
-\	"m",
-\	"m",
-\	"v",
-\	"t",
-\	"t",
-\	"t",
-\	"t",
-\	"t",
-\	"t",
-\	"t",
-\	"m",
-\	"v",
-\	"t",
-\	"t",
-\	"=",
-\	"t",
-\]
+\	g:becomplete_kindsym_undef,
+\	g:becomplete_kindsym_text,
+\	g:becomplete_kindsym_function,
+\	g:becomplete_kindsym_function,
+\	g:becomplete_kindsym_specialfunction,
+\	g:becomplete_kindsym_member,
+\	g:becomplete_kindsym_variable,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_namespace,
+\	g:becomplete_kindsym_member,
+\	g:becomplete_kindsym_text,
+\	g:becomplete_kindsym_macro,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_text,
+\	g:becomplete_kindsym_text,
+\	g:becomplete_kindsym_text,
+\	g:becomplete_kindsym_file,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_file,
+\	g:becomplete_kindsym_member,
+\	g:becomplete_kindsym_macro,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_type,
+\	g:becomplete_kindsym_specialfunction,
+\	g:becomplete_kindsym_type,
+\ ]
 "}}}
 
 
@@ -90,33 +90,26 @@ endfunction
 
 "{{{
 function becomplete#lsp#complete#async(file, line, column)
-	let l:server = becomplete#lsp#server#get(a:file)
-
-	let l:p = {}
-	let l:p["textDocument"] = { "uri": "file://" . a:file }
-	let l:p["position"] = {
-	\	"line": a:line - 1,
-	\	"character": a:column - 1
-	\ }
-
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
-	call becomplete#lsp#base#request(l:server, "textDocument/completion", l:p, function("s:complete_hdlr"))
+
+	call becomplete#lsp#base#request(
+	\	becomplete#lsp#server#get(a:file),
+	\	"textDocument/completion",
+	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column),
+	\	function("s:complete_hdlr")
+	\ )
 endfunction
 "}}}
 
 "{{{
 function becomplete#lsp#complete#sync(file, line, column)
-	let l:server = becomplete#lsp#server#get(a:file)
-
-	let l:p = {}
-	let l:p["textDocument"] = { "uri": "file://" . a:file }
-	let l:p["position"] = {
-	\	"line": a:line - 1,
-	\	"character": a:column - 1
-	\ }
-
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
-	let l:res = becomplete#lsp#base#request(l:server, "textDocument/completion", l:p)
+
+	let l:res = becomplete#lsp#base#request(
+	\	becomplete#lsp#server#get(a:file),
+	\	"textDocument/completion",
+	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
+	\ )
 
 	return s:item_filter(l:res)
 endfunction

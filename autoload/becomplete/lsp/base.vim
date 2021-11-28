@@ -37,29 +37,6 @@ endfunction
 "}}}
 
 "{{{
-function s:parse_uri(uri)
-	return matchstr(a:uri, '.*://\zs.*\ze')
-endfunction
-"}}}
-
-"{{{
-function s:parse_range(msg)
-	let l:range = get(a:msg, "range", {
-	\		"start": { "line": 0, "character": 0 },
-	\		"end": { "line": 0, "character": 0}
-	\	}
-	\ )
-
-	return {
-	\	"start_line": l:range["start"]["line"] + 1,
-	\	"start_char": l:range["start"]["character"] + 1,
-	\	"end_line": l:range["end"]["line"] + 1,
-	\	"end_char": l:range["end"]["character"] + 1
-	\ }
-endfunction
-"}}}
-
-"{{{
 function s:sync_request_hdlr(server, result, request_id)
 	call becomplete#log#msg("sync hdlr " . a:request_id . " " . string(a:result))
 
@@ -69,17 +46,18 @@ endfunction
 "}}}
 
 "{{{
-function s:sync_request_wait(request)
+function s:sync_request_wait(request, timeout_ms)
+	let l:max_retries = a:timeout_ms / 10
 	let l:retry = 0
 
 	while !has_key(a:request, "result")
+		if l:retry >= l:max_retries
+			call becomplete#log#msg("timeout on request " . a:request["method"])
+			return {}
+		endif
+
 		sleep 10m
 		let l:retry += 1
-
-		if l:retry > 200
-			call becomplete#log#msg("timeout on request " . a:request["method"])
-			return { "error": { "message": "request timeout" }}
-		endif
 	endwhile
 
 	return a:request["result"]
@@ -95,15 +73,15 @@ endfunction
 "{{{
 function s:diag_hdlr(server, content)
 	try
-		let l:file = s:parse_uri(a:content["params"]["uri"])
+		let l:file = becomplete#lsp#response#uri(a:content["params"])
 
 		for l:diag in a:content["params"]["diagnostics"]
-			let l:range = s:parse_range(l:diag)
+			let [l:line, l:col, _, _] = becomplete#lsp#response#range(l:diag)
 			let l:msg = l:diag["message"]
 
 			call becomplete#log#msg(
 			\	"diagnostic message: " . l:file . ":"
-			\	. l:range["start_line"] . ":" . l:range["start_char"]
+			\	. l:line . ":" . l:col
 			\	. " " . l:msg
 			\ )
 		endfor
@@ -203,7 +181,7 @@ function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	call s:send(a:server["job"], s:format(a:method, a:params, l:id))
 
 	if a:hdlr == v:none
-		return s:sync_request_wait(l:req)
+		return s:sync_request_wait(l:req, a:server["timeout-ms"])
 	endif
 endfunction
 "}}}
