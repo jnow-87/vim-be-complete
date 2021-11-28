@@ -58,6 +58,7 @@ function s:init()
 		\	. " args: " . string(l:cfg["command"][1:])
 		\	. " file-types: " . string(l:cfg["filetypes"])
 		\	. " triggers: " . string(l:cfg["trigger"])
+		\	. " timeout: " . l:cfg["timeout-ms"] . "ms"
 		\ ]
 	endfor
 

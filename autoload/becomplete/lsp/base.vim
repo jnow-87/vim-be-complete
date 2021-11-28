@@ -46,17 +46,18 @@ endfunction
 "}}}
 
 "{{{
-function s:sync_request_wait(request)
+function s:sync_request_wait(request, timeout_ms)
+	let l:max_retries = a:timeout_ms / 10
 	let l:retry = 0
 
 	while !has_key(a:request, "result")
-		sleep 10m
-		let l:retry += 1
-
-		if l:retry > 200
+		if l:retry >= l:max_retries
 			call becomplete#log#msg("timeout on request " . a:request["method"])
 			return {}
 		endif
+
+		sleep 10m
+		let l:retry += 1
 	endwhile
 
 	return a:request["result"]
@@ -180,7 +181,7 @@ function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	call s:send(a:server["job"], s:format(a:method, a:params, l:id))
 
 	if a:hdlr == v:none
-		return s:sync_request_wait(l:req)
+		return s:sync_request_wait(l:req, a:server["timeout-ms"])
 	endif
 endfunction
 "}}}

@@ -13,13 +13,14 @@ let s:server_jobs = {}
 """"
 
 "{{{
-function s:server(cmd=[], filetypes=[])
+function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	return {
 	\	"initialised": 0,
 	\
 	\	"command": a:cmd,
 	\	"job": "",
 	\	"filetypes": a:filetypes,
+	\	"timeout-ms": a:timeout_ms,
 	\	"request-id": 0,
 	\	"requests": {},
 	\	"data": "",
@@ -141,8 +142,8 @@ endfunction
 """"
 
 "{{{
-function becomplete#lsp#server#register(cmd, filetypes)
-	let l:server = s:server(a:cmd, [])
+function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
+	let l:server = s:server(a:cmd, [], a:timeout_ms)
 
 	for l:ftype in a:filetypes
 		if !has_key(s:server_types, l:ftype)

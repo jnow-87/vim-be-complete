@@ -56,7 +56,7 @@ function s:init()
 
 	" register servers
 	for l:cfg in g:becomplete_language_servers
-		call becomplete#lsp#server#register(l:cfg["command"], l:cfg["filetypes"])
+		call becomplete#lsp#server#register(l:cfg["command"], l:cfg["filetypes"], l:cfg["timeout-ms"])
 
 		for l:ftype in l:cfg["filetypes"]
 			let g:becomplete_language_triggers[l:ftype] = l:cfg["trigger"]
