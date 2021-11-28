@@ -1,4 +1,19 @@
 """"
+"" local functions
+""""
+
+"{{{
+" \brief	callback to handle the result of an lsp completion request and
+"			show a popup menu
+"
+" \param	items	list with vim complete-items
+function s:completion_hdlr(items)
+	call complete(becomplete#complete#find_start() + 1, a:items)
+endfunction
+"}}}
+
+
+""""
 "" global functions
 """"
 
@@ -134,7 +149,7 @@ function becomplete#complete#on_user()
 		let l:file = expand("%:p")
 
 		call becomplete#lsp#document#open(l:file)
-		call l:server["complete"](l:file, line("."), col("."))
+		call s:completion_hdlr(l:server["complete"](l:file, line("."), col("."), function("s:completion_hdlr")))
 		call becomplete#lsp#document#close(l:file)
 
 		return ""
