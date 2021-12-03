@@ -6,14 +6,14 @@ let g:loaded_becomplete = 1
 
 
 """"
-"" global variables
+"" configuration variables
 """"
 
-let g:becomplete_language_servers = get(g:, "becomplete_language_servers", [])
-let g:becomplete_language_triggers = {}
-
+"{{{
+" enable the plugin log
 let g:becomplete_log_verbose = get(g:, "becomplete_log_verbose", 0)
 
+" key bindings
 let g:becomplete_key_complete = get(g:, "becomplete_key_complete", "<tab>")
 let g:becomplete_key_complete_prev = get(g:, "becomplete_key_complete_prev", "<s-tab>")
 let g:becomplete_key_arg_next = get(g:, "becomplete_key_arg_next", "<c-n>")
@@ -25,13 +25,21 @@ let g:becomplete_key_symbol_all = get(g:, "becomplete_key_symbol_all", "ls")
 let g:becomplete_key_symbol_functions = get(g:, "becomplete_key_symbol_functions", "lf")
 let g:becomplete_key_symbol_funchead = get(g:, "becomplete_key_symbol_funchead", "lh")
 
+" markers for function argument selection
 let g:becomplete_arg_mark_left = "`<"
 let g:becomplete_arg_mark_right = ">`"
 
+" always show a menu for goto commands, even if a single item will be shown
 let g:becomplete_goto_menu_always = get(g:, "becomplete_goto_menu_always", 1)
+
+" default mode to use for viewing goto targets
+"	either "split" or "tab"
 let g:becomplete_goto_default = get(g:, "becomplete_goto_default", "split")
+
+" width of the goto preview window
 let g:becomplete_goto_preview_width = get(g:, "becomplete_goto_preview_width", (&columns / 5))
 
+" strings used as the kind key in menus, such as the completion or symbol menu
 let g:becomplete_kindsym_undef = get(g:, "becomplete_kindsym_type", "?")
 let g:becomplete_kindsym_type = get(g:, "becomplete_kindsym_type", "t")
 let g:becomplete_kindsym_namespace = get(g:, "becomplete_kindsym_namespace", ":")
@@ -42,6 +50,25 @@ let g:becomplete_kindsym_variable = get(g:, "becomplete_kindsym_variable", "v")
 let g:becomplete_kindsym_macro = get(g:, "becomplete_kindsym_macro", "d")
 let g:becomplete_kindsym_file = get(g:, "becomplete_kindsym_file", "i")
 let g:becomplete_kindsym_text = get(g:, "becomplete_kindsym_file", "s")
+"}}}
+
+
+""""
+"" global variables
+""""
+
+"{{{
+" list of language server configurations each with the following keys:
+"	command: list of strings representing the language server binary and its
+"			 command line arguments
+"	filetypes: list of vim file type strings the server supports
+"	timeout-ms: timeout for synchronous request in milliseconds
+"	trigger: list of strings which trigger a completion request when typed
+let g:becomplete_language_servers = get(g:, "becomplete_language_servers", [])
+
+" mapping from vim file types to completion request triggers
+let g:becomplete_language_triggers = {}
+"}}}
 
 
 """"
@@ -49,6 +76,7 @@ let g:becomplete_kindsym_text = get(g:, "becomplete_kindsym_file", "s")
 """"
 
 "{{{
+" \brief	plugin init
 function s:init()
 	" create BeComplete autocmd group
 	augroup BeComplete
@@ -66,6 +94,7 @@ endfunction
 "}}}
 
 "{{{
+" \brief	buffer init
 function s:init_buffer()
 	let l:server = becomplete#lsp#server#get("")
 

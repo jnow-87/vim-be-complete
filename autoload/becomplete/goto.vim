@@ -9,15 +9,21 @@ nunmap <c-f11><c-f12><c-f13>
 """"
 
 "{{{
+" \brief	init the split preview window
 function s:split_preview_init()
+	" auto close the window
 	autocmd BeComplete WinLeave <buffer> silent call s:split_preview_cleanup()
 
+	" close window
 	call util#map#n(g:becomplete_key_goto_preview_close, ":call " . s:sid . "split_preview_cleanup()<cr>", "<buffer>")
+
+	" maximise
 	call util#map#n(g:becomplete_key_goto_preview_expand, ":call util#window#expand()<cr>", "<buffer>")
 endfunction
 "}}}
 
 "{{{
+" \brief	undo s:split_preview_init() and close the preview window
 function s:split_preview_cleanup()
 	autocmd! BeComplete WinLeave <buffer>
 
@@ -29,6 +35,15 @@ endfunction
 "}}}
 
 "{{{
+" \brief	Focus the symbol at the given file and line.
+"			Depending on the setting of s:goto_mode_split the symbol is shown
+"			in a split preview window or in another tab. If the file doesn't
+"			exist in a tab already, a new one is created.
+"			If the file is rendered in the current tab the vim tag stack is
+"			updated to allow returning to the current position.
+"
+" \param	file	file to goto
+" \param	line	line to focus within a:file
 function s:show(file, line)
 	" ensure to be out of insert mode
 	call feedkeys("\<esc>")
@@ -51,6 +66,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	callback to handle the selection of an item from the goto menu
+"			call s:show() for the selected entry
+"
+" \param	selection	dictionary describing the selected item, cf. help
+"						v:completed_item
 function s:select_hdlr(selection)
 	iunmap <buffer> s
 	iunmap <buffer> t
@@ -63,6 +83,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	Wrapper for setting s:goto_mode_split based on the given key. The
+"			wrapper is supped to be used in mappings for popup menu item
+"			selection.
+"
+" \param	key		goto mode, "s" for split mode "t" (or anything else) for
+"					tab mode, cf. s:show()
 function s:select(key)
 	let s:goto_mode_split = (a:key == "s") ? 1 : 0
 
@@ -71,15 +97,28 @@ endfunction
 "}}}
 
 "{{{
-" \return	'<c-r>=' string, triggering auto completion
+" \brief	Perform the goto based on the given items.
+"			If the list of items contains more than one entry a popup menu
+"			with them is shown.
+"			If the list contains a single item it depends on
+"			g:becomplete_goto_menu_always if either the item is focused or the
+"			popup menu is still shown.
+"			If the list is empty nothing is done.
+"
+" \param	items	list of dictionaries according to the s:item_filter() from
+"					the plugin lsp layer
+"
+" \return	string to open a popup menu when used with a '<c-r>=' mapping
 function s:goto(items)
 	let s:goto_mode_split = (g:becomplete_goto_default == "split") ? 1 : 0
 	let l:len = len(a:items)
 
+	" handle empty list
 	if l:len == 0
 		return "\<esc>"
 	endif
 
+	" handle single-item list
 	if l:len == 1 && g:becomplete_goto_menu_always == 0
 		call s:show(a:items[0]["file"], a:items[0]["line"])
 
@@ -115,6 +154,9 @@ endfunction
 """"
 
 "{{{
+" \brief	lsp goto wrapper
+"
+" \return	string triggering the goto menu
 function becomplete#goto#decldef()
 	let l:file = expand("%:p")
 	let l:line = line(".")

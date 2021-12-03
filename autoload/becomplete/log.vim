@@ -3,7 +3,10 @@
 """"
 
 "{{{
+" log buffer name
 let s:buf_name = "be-complete-log"
+
+" vim buffer number of the log buffer
 let s:buf_nr = -1
 "}}}
 
@@ -13,6 +16,13 @@ let s:buf_nr = -1
 """"
 
 "{{{
+" \brief	create a string containing a variable name and its value
+"
+" \param	var_name	name of the vim variable to use
+" \param	indent		string to prepent to the resulting string
+"
+" \return	string with the following format
+"				a:indent a:var_name <a:var_name content>
 function s:config_str(var_name, indent)
 	exec "let l:val = " . a:var_name
 	return a:indent . a:var_name . ": " . l:val
@@ -20,6 +30,7 @@ endfunction
 "}}}
 "
 "{{{
+" \brief	init the log buffer
 function s:init()
 	if s:buf_nr != -1
 		return
@@ -91,6 +102,7 @@ endfunction
 """"
 
 "{{{
+" \brief	open the log buffer window
 function becomplete#log#show()
 	if g:becomplete_log_verbose == 0
 		echom "be-complete logging is disabled, cf. g:becomplete_log_verbose"
@@ -123,6 +135,9 @@ endfunction
 "}}}
 
 "{{{
+" \brief	put a message to the log buffer
+"
+" \param	msg		string to put
 function becomplete#log#msg(msg)
 	if g:becomplete_log_verbose == 0
 		return
@@ -146,6 +161,8 @@ endfunction
 "}}}
 
 "{{{
+" \brief	print an error message both to the log buffer and as a vim
+"			message
 function becomplete#log#error(msg)
 	call becomplete#log#msg("error: " . a:msg)
 

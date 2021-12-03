@@ -3,6 +3,8 @@
 """"
 
 "{{{
+" mapping of file names to integers indicating the language server file
+" version
 let s:file_versions = {}
 "}}}
 
@@ -12,6 +14,9 @@ let s:file_versions = {}
 """"
 
 "{{{
+" \brief	lsp document open wrapper
+"
+" \param	file	file to open
 function becomplete#lsp#document#open(file)
 	if !has_key(s:file_versions, a:file)
 		let s:file_versions[a:file] = 0
@@ -26,6 +31,9 @@ endfunction
 "}}}
 
 "{{{
+" \brief	lsp document close wrapper
+"
+" \param	file	file to close
 function becomplete#lsp#document#close(file)
 	call becomplete#lsp#base#notification(
 	\	becomplete#lsp#server#get(a:file),

@@ -3,6 +3,10 @@
 """"
 
 "{{{
+" \brief	find the column in the current line which is the base of the
+"			completion, i.e. the beginning of the word under the cursor
+"
+" \return	column indicating the completion start
 function becomplete#complete#find_start()
     let l:line = getline('.')
     let l:start = col('.') - 1
@@ -16,6 +20,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	annotate function signature arguments with markers to jump between
+"			the arguments
+"
+" \param	str		string to annotate
+"
+" \return	annotated string
 function becomplete#complete#arg_annotate(str)
 	" locate signature in a:str
 	let l:sig_start = stridx(a:str, "(")
@@ -28,7 +38,7 @@ function becomplete#complete#arg_annotate(str)
 		return a:str[-1:-1] == ')' ? a:str[:-2] : a:str
 	endif
 
-	" surround function arguments with becomplete markers
+	" surround function arguments with markers
 	let l:braces = 0
 	let l:in_arg = 1
 	let l:anno = a:str[0:l:sig_start] . g:becomplete_arg_mark_left
@@ -61,6 +71,15 @@ endfunction
 "}}}
 
 "{{{
+" \brief	highlight a string in the current line surrounded by function
+"			argument markers as annotated by
+"			s:becomplete#complete#arg_annotate()
+"
+" \param	forward		1 to select the next argument
+"						otherwise select the previous argument
+"
+" \return	0 an argument has been highlighted
+"			-1 otherwise
 function becomplete#complete#arg_select(forward)
 	let l:line = getline('.')
 	let l:llen = len(line)
@@ -92,6 +111,9 @@ endfunction
 "}}}
 
 "{{{
+" \brief	user-triggered lsp completion wrapper
+"
+" \return	string to be used with an "<c-r>=" mapping
 function becomplete#complete#on_user()
 	if pumvisible()
 		return "\<c-n>"
@@ -102,10 +124,12 @@ function becomplete#complete#on_user()
 
 	let l:char = getline('.')[col(".") - 2]
 
+	" abort completion
 	if l:char == " " || l:char == "\t" || l:char == ""
 		return util#key#escape(g:becomplete_key_complete)
 	endif
 
+	" lsp or fallback completion
 	if l:server["initialised"] == 1
 		let l:file = expand("%:p")
 
@@ -122,6 +146,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	trigger completion if a:key completes a:seq
+"
+" \param	key		typed key
+" \param	seq		string with a trigger sequence
+"
+" \return	a:key
 function becomplete#complete#on_key(key, seq)
 	let l:line = getline(".")
 	let l:col = col(".")

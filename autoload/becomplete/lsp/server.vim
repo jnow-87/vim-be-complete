@@ -3,7 +3,10 @@
 """"
 
 "{{{
+" mapping from vim file type to lsp server object
 let s:server_types = {}
+
+" mapping from vim job string to lsp server object
 let s:server_jobs = {}
 "}}}
 
@@ -13,6 +16,14 @@ let s:server_jobs = {}
 """"
 
 "{{{
+" \brief	create an lsp server object with default values
+"
+" \param	cmd			list representing the language server binary and its
+"						command line arguments
+" \param	filetypes	list of vim file types that the server supports
+" \param	timeout_ms	timeout [ms] for synchronous lsp requests
+"
+" \return	server object as a dictionary
 function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	return {
 	\	"initialised": 0,
@@ -34,6 +45,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	set server callback functions based on the given capabilities
+"
+" \param	server			lsp server object
+" \param	capabilities	dictionary containing the returned capabilities of
+"							a language server
 function s:server_capabilities(server, capabilities)
 	if has_key(a:capabilities, "completionProvider") |		let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
 	if has_key(a:capabilities, "declarationProvider") |		let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
@@ -43,11 +59,14 @@ endfunction
 "}}}
 
 "{{{
+" \brief	start a language server for the given file type
+"
+" \param	filetype	vim file type
 function s:server_start(filetype)
 	let l:server = get(s:server_types, a:filetype, {})
 
 	if l:server == {}
-		call becomplete#log#error("no server registerd for filetype " . a:filetype)
+		call becomplete#log#error("no server registered for file type " . a:filetype)
 		return
 	endif
 
@@ -65,7 +84,6 @@ function s:server_start(filetype)
 	let l:opts["out_cb"] = "becomplete#lsp#base#rx_hdlr"
 	let l:opts["err_cb"] = function("s:error_hdlr")
 
-	" TODO handle errors
 	let l:job = job_start(l:server["command"], l:opts)
 	call becomplete#log#msg("server job id: " . l:job)
 
@@ -144,9 +162,10 @@ endfunction
 "}}}
 
 "{{{
+" \brief	vim channel callback for close events
+"
+" \param	channel		vim channel object
 function s:close_hdlr(channel)
-	" TODO check if s:close_hdlr is triggered if the server is killed/closes
-	"      on its own
 	let l:job = ch_getjob(a:channel)
 	let l:server = get(s:server_jobs, l:job, {})
 
@@ -160,6 +179,10 @@ endfunction
 "}}}
 
 "{{{
+" \brief	vim channel callback for error events
+"
+" \param	channel		vim channel object
+" \param	msg			error message
 function s:error_hdlr(channel, msg)
 	call becomplete#log#msg("stderr: " . a:msg)
 endfunction
@@ -171,6 +194,13 @@ endfunction
 """"
 
 "{{{
+" \brief	make a language server configuration known to the plugin
+"
+" \param	cmd			list representing the language server binary and its
+"						command line arguments
+" \param	filetypes	list of vim file types that the server supports
+" \param	timeout_ms	timeout [ms] for synchronous lsp requests
+"
 function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
 	let l:server = s:server(a:cmd, [], a:timeout_ms)
 
@@ -182,6 +212,7 @@ function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
 			let s:server_types[l:ftype] = l:server
 
 			exec "autocmd BeComplete FileType " . l:ftype . " call s:server_start(\"" . l:ftype . "\")"
+
 		else
 			call becomplete#log#error("server for filetype " . l:ftype . " already registered")
 		endif
@@ -190,6 +221,7 @@ endfunction
 "}}}
 
 "{{{
+" \brief	terminate all running language servers
 function becomplete#lsp#server#stop_all()
 	for l:server in values(s:server_jobs)
 		call becomplete#log#msg("trigger server shutdown: " . l:server["command"][0])
@@ -213,6 +245,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	return a language server object
+"
+" \param	arg		might either be a vim job object or a file name
+"
+" \return	language server object
 function becomplete#lsp#server#get(arg)
 	if has_key(s:server_jobs, a:arg)
 		return s:server_jobs[a:arg]

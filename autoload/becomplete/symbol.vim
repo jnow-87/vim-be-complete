@@ -9,6 +9,12 @@ nunmap <c-f11><c-f12><c-f13>
 """"
 
 "{{{
+" \brief	Callback to handle the selection of an item from the symbol menu.
+"			Focus the symbol and update the vim tag stack with the current
+"			line.
+"
+" \param	selection	dictionary describing the selected item, cf. help
+"						v:completed_item
 function s:selected(selection)
 	call becomplete#log#msg("goto: " . string(a:selection))
 
@@ -21,6 +27,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	lsp wrapper to get symbols for the current file
+"
+" \param	kinds	symbol kinds to include, according to
+"					g:becomplete_kindsym_*
+"
+" \return	list with the symbols in the current file
 function s:symbols(kinds)
 	let l:file = expand("%:p")
 	let l:server = becomplete#lsp#server#get(l:file)
@@ -34,6 +46,13 @@ endfunction
 "}}}
 
 "{{{
+" \brief	find the last symbol between the first and the current line
+"
+" \param	symbols		line-sorted list of symbols
+" \param	key			key into a:symbols that shall be compared against the
+"						current line number
+"
+" \return	index into a:symbols for the identified symbol
 function s:find_closest(symbols, key)
 	let l:line = line(".")
 	let l:idx = 0
@@ -49,6 +68,14 @@ endfunction
 "}}}
 
 "{{{
+" \brief	create a popup menu for the given symbol kinds
+"
+" \param	kinds		symbol kinds to include, according to
+"						g:becomplete_kindsym_*
+" \param	closest		if 1 only the last symbol between the first and the
+"						current line is included in the menu
+"
+" \return	string triggering a popup menu
 function s:menu(kinds, closest=0)
 	let l:items = []
 
@@ -80,12 +107,18 @@ endfunction
 """"
 
 "{{{
+" \brief	lsp symbol wrapper including all symbols in the document
+"
+" \return	string triggering the symbol menu
 function becomplete#symbol#all()
 	return s:menu([])
 endfunction
 "}}}
 
 "{{{
+" \brief	lsp symbol wrapper including only functions in the document
+"
+" \return	string triggering the symbol menu
 function becomplete#symbol#functions()
 	return s:menu([
 	\	g:becomplete_kindsym_function,
@@ -95,6 +128,10 @@ endfunction
 "}}}
 
 "{{{
+" \brief	lsp symbol wrapper including only the last function between the
+"			first and the current line
+"
+" \return	string triggering the symbol menu
 function becomplete#symbol#function_head()
 	return s:menu(
 	\	[

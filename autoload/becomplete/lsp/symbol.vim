@@ -3,6 +3,7 @@
 """"
 
 "{{{
+" string representations for the lsp document symbol item kinds
 let s:symbol_kinds = [
 \	g:becomplete_kindsym_undef,
 \	g:becomplete_kindsym_file,
@@ -34,7 +35,23 @@ let s:symbol_kinds = [
 \ ]
 "}}}
 
+
+""""
+"" local functions
+""""
+
 "{{{
+" \brief	convert the lsp document symbols to a list of dictionaries
+"
+" \param	response	result of the lsp document symbol request
+" \param	kinds		list of symbol kinds to look for, according to
+"						g:becomplete_kindsym_*
+"
+" \return	list of dictionaries with the following keys
+"				name: symbol name
+"				line: line within the file
+"				kind: symbol kind according to g:becomplete_kindsym_*
+"				detail: auxiliary information
 function s:parse(response, kinds=[])
 	let l:items = []
 
@@ -69,6 +86,13 @@ endfunction
 """"
 
 "{{{
+" \brief	lsp document symbol wrapper
+"
+" \param	file	file name to gather symbols for
+" \param	kinds	list of symbol kinds to look for, according to
+"					g:becomplete_kindsym_*
+"
+" \return	list of symbols, cf. s:parse()
 function becomplete#lsp#symbol#file(file, kinds)
 	call becomplete#log#msg("list symbols for " . a:file)
 
