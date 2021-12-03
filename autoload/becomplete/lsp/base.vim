@@ -3,6 +3,7 @@
 """"
 
 "{{{
+" mapping between lsp notifications and callback functions
 let s:notification_hdlrs = {
 \	"textDocument/publishDiagnostics": "s:diag_hdlr",
 \	"default": "s:default_notification_hdlr",
@@ -15,6 +16,13 @@ let s:notification_hdlrs = {
 """"
 
 "{{{
+" \brief	create an lsp message
+"
+" \param	method	lsp method, e.g. textDocument/completion
+" \param	params	a:method parameters
+" \param	id		lsp message id
+"
+" \return	dictionary containing the resulting lsp message
 function s:format(method, params, id=-1)
 	let l:req = {}
 	let l:req["jsonrpc"] = "2.0"
@@ -30,6 +38,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	send the given lsp message to the language server associated with
+"			job, adding an lsp message header
+"
+" \param	job		vim job handle connected to the target language server
+" \param	data	lsp message dictionary, cf. s:format()
 function s:send(job, data)
 	let l:data_j = json_encode(a:data)
 	call ch_sendraw(a:job, "Content-Length: " . len(l:data_j) . "\r\n\r\n" . l:data_j)
@@ -37,6 +50,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	Callback function for synchronous lsp request.
+"			Sets the associated request's "result" member.
+"
+" \param	server		language server object the result is for
+" \param	result		lsp result dictionary
+" \param	request_id	id of the request
 function s:sync_request_hdlr(server, result, request_id)
 	call becomplete#log#msg("sync hdlr " . a:request_id . " " . string(a:result))
 
@@ -46,6 +65,14 @@ endfunction
 "}}}
 
 "{{{
+" \brief	Wait function for synchronous lsp requests.
+"			Blocks execution until a result or a timeout occur.
+"
+" \param	request		request object to listen on
+" \param	timeout_ms	milliseconds to wait upon signaling a timeout
+"
+" \return	Dictionary containing the lsp result. In case of a timeout and
+"			empty dictionary is returned.
 function s:sync_request_wait(request, timeout_ms)
 	let l:max_retries = a:timeout_ms / 10
 	let l:retry = 0
@@ -65,12 +92,23 @@ endfunction
 "}}}
 
 "{{{
+" \brief	lsp notification handler for notifications that do not have an
+"			entry in s:notification_hdlrs. The handler indicates that a
+"			notification was dropped.
+"
+" \param	server		lsp server object
+" \param	content		dictionary with the notification
 function s:default_notification_hdlr(server, content)
 	call becomplete#log#msg("drop server message: " . string(a:content))
 endfunction
 "}}}
 
 "{{{
+" \brief	lsp notification handler for diagnostics. The handler logs the
+"			messages to the plugin log also indicating unknown formats.
+"
+" \param	server		lsp server object
+" \param	content		dictionary with the notification
 function s:diag_hdlr(server, content)
 	try
 		let l:file = becomplete#lsp#response#uri(a:content["params"])
@@ -93,6 +131,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	wrapper to call a notification handler based on
+"			s:notification_hdlrs and the lsp method contained in a:content
+"
+" \param	server		lsp server object
+" \param	content		dictionary with the lsp response
 function s:handle_notification(server, content)
 	let l:method = get(a:content, "method", "default")
 
@@ -105,6 +148,12 @@ endfunction
 "}}}
 
 "{{{
+" \brief	wrapper to parse an lsp message, responses as well as
+"			notifications, calling the respective handler functions or
+"			indicating an error
+"
+" \param	server		lsp server object
+" \param	content		dictionary with the lsp message
 function s:handle_message(server, content)
 	try
 		let l:id = a:content["id"]
@@ -136,6 +185,10 @@ endfunction
 """"
 
 "{{{
+" \brief	vim job input handler
+"
+" \param	channel		vim channel string
+" \param	msg			string with the received message
 function becomplete#lsp#base#rx_hdlr(channel, msg)
 	let l:server = becomplete#lsp#server#get(ch_getjob(a:channel))
 	let l:server["data"] .= a:msg
@@ -143,8 +196,8 @@ function becomplete#lsp#base#rx_hdlr(channel, msg)
 	while len(l:server["data"])
 		" try to split data into header and content
 		" considering
-		" 	- data containing an incomplete message
-		" 	- data containing a complete, followed by an incomplete message
+		"	- data containing an incomplete message
+		"	- data containing a complete, followed by an incomplete message
 		let l:parts = split(l:server["data"], "\r\n\r\n")
 		let l:hdr = len(l:parts) > 0 ? l:parts[0] : "incomplete:-1"
 		let l:content_len = str2nr(split(l:hdr, ":")[1])
@@ -163,6 +216,19 @@ endfunction
 "}}}
 
 "{{{
+" \brief	issue an lsp request
+"
+" \param	server		lsp server object
+" \param	method		lsp method to call
+" \param	params		parameters for a:method
+" \param	hdlr		function to call upon a response
+"
+" \return	if a:hdlr is v:none the result of the lsp response is returned as
+"			a dictionary
+"			if a:hdlr is not v:none an empty dictionary is returned, instead
+"			the result is forwarded to the specified handler
+"			if the server is not running while not currently performing the
+"			server initialisation, an empty dictionary is returned
 function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	if job_status(a:server["job"]) != "run" || (a:server["initialised"] != 1 && a:method != "initialize")
 		call becomplete#log#error("request \"" . a:method . "\": server not initialised")
@@ -183,10 +249,17 @@ function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
 	if a:hdlr == v:none
 		return s:sync_request_wait(l:req, a:server["timeout-ms"])
 	endif
+
+	return {}
 endfunction
 "}}}
 
 "{{{
+" \brief	issue an lsp notification
+"
+" \param	server	lsp server object
+" \param	method	lsp method to call
+" \param	params	parameters for a:method
 function becomplete#lsp#base#notification(server, method, params)
 	if a:server["initialised"] != 1 && a:method != "initialized"
 		call becomplete#log#error("notification \"" . a:method . "\": server not initialised")

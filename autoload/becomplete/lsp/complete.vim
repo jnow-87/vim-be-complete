@@ -3,6 +3,7 @@
 """"
 
 "{{{
+" string representations for the lsp completion item kinds
 let s:complete_kinds = [
 \	g:becomplete_kindsym_undef,
 \	g:becomplete_kindsym_text,
@@ -39,8 +40,14 @@ let s:complete_kinds = [
 """"
 
 "{{{
-function s:item_filter(items)
-	let l:items = (type(a:items) == type(v:null)) ? [] : get(a:items, "items", a:items)
+" \brief	convert the lsp completion items to a list of dictionaries with
+"			the abbr, word, kind and menu keys according to vim complete-items
+"
+" \param	response	result of the lsp completion request
+"
+" \return	list of vim completion items
+function s:item_filter(response)
+	let l:items = (type(a:response) == type(v:null)) ? [] : get(a:response, "items", a:response)
 	let l:lst = []
 
 	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
@@ -79,6 +86,11 @@ endfunction
 "}}}
 
 "{{{
+" \brief	callback function to be used with the lsp completion request
+"
+" \param	server		lsp server object
+" \param	result		lsp completion request result
+" \param	request_id	lsp request id
 function s:complete_hdlr(server, result, request_id)
 	call complete(becomplete#complete#find_start() + 1, s:item_filter(a:result))
 endfunction
@@ -90,6 +102,14 @@ endfunction
 """"
 
 "{{{
+" \brief	lsp completion wrapper with asynchronous execution, i.e. the
+"			function returns without waiting for the request to finish
+"
+" \param	file	file name to do the completion for
+" \param	line	line within a:file
+" \param	column	column within a:line
+"
+" \return	empty list
 function becomplete#lsp#complete#async(file, line, column)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
@@ -103,6 +123,14 @@ endfunction
 "}}}
 
 "{{{
+" \brief	lsp completion wrapper with synchronous execution, i.e. the
+"			function returns the completion items
+"
+" \param	file	file name to do the completion for
+" \param	line	line within a:file
+" \param	column	column within a:line
+"
+" \return	list of vim completion items, cf. s:item_filter()
 function becomplete#lsp#complete#sync(file, line, column)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
