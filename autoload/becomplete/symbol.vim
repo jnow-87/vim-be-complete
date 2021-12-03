@@ -22,6 +22,7 @@ function s:selected(selection)
 		return
 	endif
 
+	call util#tagstack#push_cursor()
 	call util#window#focus_line(a:selection["user_data"], 1)
 endfunction
 "}}}
