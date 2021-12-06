@@ -141,7 +141,7 @@ function becomplete#complete#on_user()
 
 	" abort completion
 	if l:char == " " || l:char == "\t" || l:char == ""
-		return util#key#escape(g:becomplete_key_complete)
+		return util#map#escape(g:becomplete_key_complete)
 	endif
 
 	" lsp or fallback completion
@@ -155,7 +155,7 @@ function becomplete#complete#on_user()
 		return ""
 
 	else
-		return util#key#escape(g:becomplete_complete_fallback)
+		return util#map#escape(g:becomplete_complete_fallback)
 	endif
 endfunction
 "}}}
@@ -172,7 +172,7 @@ function becomplete#complete#on_key(key, seq)
 	let l:col = col(".")
 
 	if a:key == a:seq || l:line[l:col - len(a:seq):l:col - 2] . a:key == a:seq
-		call feedkeys(util#key#escape(g:becomplete_key_complete))
+		call feedkeys(util#map#escape(g:becomplete_key_complete))
 	endif
 
 	return a:key
