@@ -10,9 +10,6 @@ let g:loaded_becomplete = 1
 """"
 
 "{{{
-" enable the plugin log
-let g:becomplete_log_verbose = get(g:, "becomplete_log_verbose", 0)
-
 " key bindings
 let g:becomplete_key_complete = get(g:, "becomplete_key_complete", "<tab>")
 let g:becomplete_key_complete_prev = get(g:, "becomplete_key_complete_prev", "<s-tab>")
@@ -165,7 +162,7 @@ call s:init()
 """"
 
 "{{{
-command -nargs=0 BeCompleteLog let g:becomplete_log_verbose = 1 | call becomplete#log#show()
+command -nargs=0 BeCompleteLog call becomplete#log#show()
 "}}}
 
 

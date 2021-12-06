@@ -3,11 +3,12 @@
 """"
 
 "{{{
-" log buffer name
-let s:buf_name = "be-complete-log"
+let s:initialised = 0
 
-" vim buffer number of the log buffer
+" log buffer data
+let s:buf_name = "be-complete-log"
 let s:buf_nr = -1
+let s:buf_line = 0
 "}}}
 
 
@@ -28,11 +29,11 @@ function s:config_str(var_name, indent)
 	return a:indent . a:var_name . ": " . l:val
 endfunction
 "}}}
-"
+
 "{{{
 " \brief	init the log buffer
 function s:init()
-	if s:buf_nr != -1
+	if s:initialised != 0
 		return
 	endif
 
@@ -59,8 +60,6 @@ function s:init()
 	\	s:config_str("g:becomplete_goto_menu_always", " "),
 	\	s:config_str("g:becomplete_goto_default", " "),
 	\	s:config_str("g:becomplete_goto_preview_width", " "),
-	\	"",
-	\	s:config_str("g:becomplete_log_verbose", " "),
 	\	"",
 	\	" language servers",
 	\ ]
@@ -92,9 +91,11 @@ function s:init()
 
 	" init log buffer
 	let s:buf_nr = bufadd(s:buf_name)
-	exec "silent call bufload(" . s:buf_nr . ")"
+	call bufload(s:buf_nr)
 	call appendbufline(s:buf_nr, 0, l:init_msg)
 	let s:buf_line = len(l:init_msg)
+
+	let s:initialised = 1
 endfunction
 "}}}
 
@@ -106,11 +107,6 @@ endfunction
 "{{{
 " \brief	open the log buffer window
 function becomplete#log#show()
-	if g:becomplete_log_verbose == 0
-		echom "be-complete logging is disabled, cf. g:becomplete_log_verbose"
-		return
-	endif
-
 	call s:init()
 
 	" display and configure buffer
@@ -141,7 +137,7 @@ endfunction
 "
 " \param	msg		string to put
 function becomplete#log#msg(msg)
-	if g:becomplete_log_verbose == 0
+	if s:initialised != 1
 		return
 	endif
 
