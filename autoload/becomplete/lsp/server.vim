@@ -36,6 +36,9 @@ function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	\	"requests": {},
 	\	"data": "",
 	\
+	\	"doc_open": function("becomplete#lsp#response#unavail_list"),
+	\	"doc_close": function("becomplete#lsp#response#unavail_list"),
+	\	"doc_update": function("becomplete#lsp#response#unavail_list"),
 	\	"complete": function("becomplete#lsp#response#unavail_list"),
 	\	"goto_decl": function("becomplete#lsp#response#unavail_list"),
 	\	"goto_def": function("becomplete#lsp#response#unavail_list"),
@@ -51,6 +54,33 @@ endfunction
 " \param	capabilities	dictionary containing the returned capabilities of
 "							a language server
 function s:server_capabilities(server, capabilities)
+	" document synchronisation callbacks
+	let a:server["doc_open"] = function("becomplete#lsp#document#open")
+	let a:server["doc_close"] = function("becomplete#lsp#document#close")
+	let a:server["doc_update"] = function("becomplete#lsp#document#update")
+
+	if has_key(a:capabilities, "textDocumentSync")
+		let l:sync_capa = get(a:capabilities, "textDocumentSync", {})
+
+		if type(l:sync_capa) == type({})
+			let l:open_close = get(l:sync_capa, "openClose", 1)
+			let l:change = get(l:sync_capa, "change", 1)
+
+			if l:open_close == 0
+				let a:server["doc_open"] = function("becomplete#lsp#response#unavail_list")
+				let a:server["doc_close"] = function("becomplete#lsp#response#unavail_list")
+			endif
+
+			if l:change == 0 || l:open_close == 0
+				let a:server["doc_update"] = function("becomplete#lsp#response#unavail_list")
+			endif
+
+		elseif l:sync_capa == 0
+			let a:server["doc_update"] = function("becomplete#lsp#response#unavail_list")
+		endif
+	endif
+
+	" language feature callbacks
 	if has_key(a:capabilities, "completionProvider") |		let a:server["complete"] = function("becomplete#lsp#complete#async") | endif
 	if has_key(a:capabilities, "declarationProvider") |		let a:server["goto_decl"] = function("becomplete#lsp#goto#declaration") | endif
 	if has_key(a:capabilities, "definitionProvider") |		let a:server["goto_def"] = function("becomplete#lsp#goto#definition") | endif
@@ -59,19 +89,78 @@ endfunction
 "}}}
 
 "{{{
+" \brief	vim channel callback for close events
+"
+" \param	channel		vim channel object
+function s:close_hdlr(channel)
+	let l:job = ch_getjob(a:channel)
+	let l:server = get(s:server_jobs, l:job, {})
+
+	if l:server != {}
+		call becomplete#log#error("server closed for filetypes " . string(l:server["filetypes"]))
+
+		unlet s:server_jobs[l:job]
+		let l:server["initialised"] = -1
+	endif
+endfunction
+"}}}
+
+"{{{
+" \brief	vim channel callback for error events
+"
+" \param	channel		vim channel object
+" \param	msg			error message
+function s:error_hdlr(channel, msg)
+	call becomplete#log#msg("stderr: " . a:msg)
+endfunction
+"}}}
+
+
+""""
+"" global functions
+""""
+
+"{{{
+" \brief	make a language server configuration known to the plugin
+"
+" \param	cmd			list representing the language server binary and its
+"						command line arguments
+" \param	filetypes	list of vim file types that the server supports
+" \param	timeout_ms	timeout [ms] for synchronous lsp requests
+"
+function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
+	let l:server = s:server(a:cmd, [], a:timeout_ms)
+
+	for l:ftype in a:filetypes
+		if !has_key(s:server_types, l:ftype)
+			call becomplete#log#msg("register server for " . l:ftype)
+
+			let l:server["filetypes"] += [ l:ftype ]
+			let s:server_types[l:ftype] = l:server
+
+		else
+			call becomplete#log#error("server for filetype " . l:ftype . " already registered")
+		endif
+	endfor
+endfunction
+"}}}
+
+"{{{
 " \brief	start a language server for the given file type
 "
 " \param	filetype	vim file type
-function s:server_start(filetype)
+"
+" \return	the language server
+function becomplete#lsp#server#start(filetype)
 	let l:server = get(s:server_types, a:filetype, {})
 
 	if l:server == {}
-		call becomplete#log#error("no server registered for file type " . a:filetype)
-		return
+		call becomplete#log#msg("no server registered for file type " . a:filetype)
+		return s:server()
 	endif
 
 	if l:server["initialised"] == 1
-		return
+		return l:server
 	endif
 
 	call becomplete#log#msg("starting " . a:filetype . " language server: " . l:server["command"][0])
@@ -90,7 +179,7 @@ function s:server_start(filetype)
 	let l:server["job"] = l:job
 	let s:server_jobs[l:job] = l:server
 
-	" initialise language server protocol
+	" initialise language server
 	let l:p = {}
 	let l:p["rootUri"] = "file://" . getcwd()
 	let l:p["clientInfo"] = { "name": "vim-be-complete" }
@@ -150,73 +239,12 @@ function s:server_start(filetype)
 		call becomplete#lsp#base#notification(l:server, "initialized", {})
 		let l:server["initialised"] = 1
 
-		for l:ftype in l:server["filetypes"]
-			exec "autocmd! BeComplete FileType " . l:ftype
-		endfor
-
 	else
 		call becomplete#log#error("server initialisation failed")
 		let l:server["initialised"] = -1
 	endif
-endfunction
-"}}}
 
-"{{{
-" \brief	vim channel callback for close events
-"
-" \param	channel		vim channel object
-function s:close_hdlr(channel)
-	let l:job = ch_getjob(a:channel)
-	let l:server = get(s:server_jobs, l:job, {})
-
-	if l:server != {}
-		call becomplete#log#error("server closed for filetypes " . string(l:server["filetypes"]))
-
-		unlet s:server_jobs[l:job]
-		let l:server["initialised"] = -1
-	endif
-endfunction
-"}}}
-
-"{{{
-" \brief	vim channel callback for error events
-"
-" \param	channel		vim channel object
-" \param	msg			error message
-function s:error_hdlr(channel, msg)
-	call becomplete#log#msg("stderr: " . a:msg)
-endfunction
-"}}}
-
-
-""""
-"" global functions
-""""
-
-"{{{
-" \brief	make a language server configuration known to the plugin
-"
-" \param	cmd			list representing the language server binary and its
-"						command line arguments
-" \param	filetypes	list of vim file types that the server supports
-" \param	timeout_ms	timeout [ms] for synchronous lsp requests
-"
-function becomplete#lsp#server#register(cmd, filetypes, timeout_ms)
-	let l:server = s:server(a:cmd, [], a:timeout_ms)
-
-	for l:ftype in a:filetypes
-		if !has_key(s:server_types, l:ftype)
-			call becomplete#log#msg("register server for " . l:ftype)
-
-			let l:server["filetypes"] += [ l:ftype ]
-			let s:server_types[l:ftype] = l:server
-
-			exec "autocmd BeComplete FileType " . l:ftype . " call s:server_start(\"" . l:ftype . "\")"
-
-		else
-			call becomplete#log#error("server for filetype " . l:ftype . " already registered")
-		endif
-	endfor
+	return l:server
 endfunction
 "}}}
 

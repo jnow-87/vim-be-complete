@@ -33,3 +33,15 @@ function becomplete#util#sort(dict, key)
 	call sort(a:dict, "s:compare", { "key": a:key })
 endfunction
 "}}}
+
+"{{{
+" \brief	get buffer content as a single string
+"
+" \param	file	file to gather content for
+"
+" \return	String containing the buffer lines associated with a:file. Lines
+"			are joined using a newline character.
+function becomplete#util#buftext(file)
+	return join(getbufline(a:file, 1, '$'), "\n")."\n"
+endfunction
+"}}}

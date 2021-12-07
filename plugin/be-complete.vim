@@ -95,11 +95,16 @@ endfunction
 
 "{{{
 " \brief	buffer init
-function s:init_buffer()
-	let l:server = becomplete#lsp#server#get("")
+function s:buffer_init()
+	let l:file = expand("%:p")
+	let l:filetype = getbufvar("", "&filetype")
 
-	" function argument highlighting
-	if l:server["command"] != []
+	let l:server = becomplete#lsp#server#start(l:filetype)
+
+	if l:server["initialised"] == 1
+		call l:server["doc_open"](l:file)
+
+		" function argument highlighting
 		exec "syn region becomplete_arg matchgroup=None "
 		\	. "start='" . g:becomplete_arg_mark_left
 		\	. "' end='" . g:becomplete_arg_mark_right
@@ -122,7 +127,7 @@ function s:init_buffer()
 	call util#map#i("<down>", "pumvisible() ? '\<c-n>' : '<down>'", "<buffer> <expr> noescape noinsert")
 
 	" language-specific completion
-	for l:seq in get(g:becomplete_language_triggers, getbufvar("", "&filetype"), [])
+	for l:seq in get(g:becomplete_language_triggers, l:filetype, [])
 		let l:key = l:seq[-1:]
 		call util#map#i(l:key,
 		\	"<c-r>=becomplete#complete#on_key('" . l:key . "', '" . l:seq . "')<cr>",
@@ -134,7 +139,7 @@ function s:init_buffer()
 	call util#map#nvi(g:becomplete_key_arg_next, "<esc>:call becomplete#complete#arg_select(1)<cr>", "<buffer>")
 	call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#arg_select(0)<cr>", "<buffer>")
 
-	" select the first function argument upson completion
+	" select the first function argument upon completion
 	" "<esc><right>" is required to avoid ending up in "insert select" mode
 	autocmd BeComplete CompleteDone <buffer>
 	\	if becomplete#complete#arg_select(1) == 0 | call feedkeys("\<esc>\<right>") | endif
@@ -146,6 +151,18 @@ function s:init_buffer()
 	call util#map#n(g:becomplete_key_symbol_all, "<insert><c-r>=becomplete#symbol#all()<cr>", "<buffer>")
 	call util#map#n(g:becomplete_key_symbol_functions, "<insert><c-r>=becomplete#symbol#functions()<cr>", "<buffer>")
 	call util#map#n(g:becomplete_key_symbol_funchead, "<insert><c-r>=becomplete#symbol#function_head()<cr>", "<buffer>")
+endfunction
+"}}}
+
+"{{{
+" \brief	cleanup buffer data
+function s:buffer_unload()
+	let l:file = expand("<afile>:p")
+
+	let l:server = becomplete#lsp#server#get(l:file)
+	call l:server["doc_close"](l:file)
+
+	exec "autocmd! BeComplete CompleteDone <buffer=" . l:bufnr . ">"
 endfunction
 "}}}
 
@@ -171,6 +188,11 @@ command -nargs=0 BeCompleteLog call becomplete#log#show()
 """"
 
 "{{{
-autocmd BeComplete VimLeave * silent call becomplete#lsp#server#stop_all()
-autocmd BeComplete FileType * silent call s:init_buffer()
+" buffer control
+autocmd BeComplete FileType * call s:buffer_init()
+autocmd BeComplete BufUnload * call s:buffer_unload()
+autocmd BeComplete BufWrite * call becomplete#lsp#document#modified(expand("<afile>:p"))
+
+" shutdown
+autocmd BeComplete VimLeave * call becomplete#lsp#server#stop_all()
 "}}}

@@ -146,11 +146,8 @@ function becomplete#complete#on_user()
 
 	" lsp or fallback completion
 	if l:server["initialised"] == 1
-		let l:file = expand("%:p")
-
-		call becomplete#lsp#document#open(l:file)
+		call l:server["doc_update"](l:file)
 		call s:completion_hdlr(l:server["complete"](l:file, line("."), col("."), function("s:completion_hdlr")))
-		call becomplete#lsp#document#close(l:file)
 
 		return ""
 

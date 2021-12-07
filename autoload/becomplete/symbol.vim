@@ -38,9 +38,8 @@ function s:symbols(kinds)
 	let l:file = expand("%:p")
 	let l:server = becomplete#lsp#server#get(l:file)
 
-	call becomplete#lsp#document#open(l:file)
+	call l:server["doc_update"](l:file)
 	let l:res = l:server["symbols"](l:file, a:kinds)
-	call becomplete#lsp#document#close(l:file)
 
 	return l:res
 endfunction
