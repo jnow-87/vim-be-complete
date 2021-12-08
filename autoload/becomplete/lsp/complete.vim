@@ -3,6 +3,9 @@
 """"
 
 "{{{
+" handler to call upon asynchronous completion finished
+let s:async_hdlr = v:none
+
 " string representations for the lsp completion item kinds
 let s:complete_kinds = [
 \	g:becomplete_kindsym_undef,
@@ -40,8 +43,9 @@ let s:complete_kinds = [
 """"
 
 "{{{
-" \brief	convert the lsp completion items to a list of dictionaries with
-"			the abbr, word, kind and menu keys according to vim complete-items
+" \brief	Convert the lsp completion items to a list of dictionaries with
+"			the word, kind, menu and dup keys according to vim complete-items.
+"			The "user_data" key is used for function signature information.
 "
 " \param	response	result of the lsp completion request
 "
@@ -73,10 +77,11 @@ function s:item_filter(response)
 		\ )
 
 		call add(l:lst, {
-		\		"abbr": l:insert,
-		\		"word": becomplete#complete#arg_annotate(l:label),
+		\		"word": l:insert,
 		\		"kind": l:kind,
 		\		"menu": l:detail . " " . l:label,
+		\		"user_data": l:label[len(l:insert):],
+		\		"dup": 1,
 		\	}
 		\ )
 	endfor
@@ -91,8 +96,8 @@ endfunction
 " \param	server		lsp server object
 " \param	result		lsp completion request result
 " \param	request_id	lsp request id
-function s:complete_hdlr(server, result, request_id)
-	call complete(becomplete#complete#find_start() + 1, s:item_filter(a:result))
+function s:completion_hdlr(server, result, request_id)
+	call s:async_hdlr(s:item_filter(a:result))
 endfunction
 "}}}
 
@@ -108,17 +113,21 @@ endfunction
 " \param	file	file name to do the completion for
 " \param	line	line within a:file
 " \param	column	column within a:line
+" \param	hdlr	handler to call with the completion result
 "
 " \return	empty list
-function becomplete#lsp#complete#async(file, line, column)
+function becomplete#lsp#complete#async(file, line, column, hdlr)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
+	let s:async_hdlr = a:hdlr
 	call becomplete#lsp#base#request(
 	\	becomplete#lsp#server#get(a:file),
 	\	"textDocument/completion",
 	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column),
-	\	function("s:complete_hdlr")
+	\	function("s:completion_hdlr")
 	\ )
+
+	return []
 endfunction
 "}}}
 
@@ -129,9 +138,10 @@ endfunction
 " \param	file	file name to do the completion for
 " \param	line	line within a:file
 " \param	column	column within a:line
+" \param	hdlr	handler to call with the completion result
 "
 " \return	list of vim completion items, cf. s:item_filter()
-function becomplete#lsp#complete#sync(file, line, column)
+function becomplete#lsp#complete#sync(file, line, column, hdlr=v:none)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
 	let l:res = becomplete#lsp#base#request(
