@@ -114,7 +114,7 @@ function s:buffer_init()
 		for l:seq in get(g:becomplete_language_triggers, l:filetype, [])
 			let l:key = l:seq[-1:]
 			call util#map#i(l:key,
-			\	"<c-r>=becomplete#complete#on_key('" . l:key . "', '" . l:seq . "')<cr>",
+			\	"<c-r>=becomplete#complete#key('" . l:key . "', '" . l:seq . "')<cr>",
 			\	"<buffer> noescape noinsert"
 			\ )
 		endfor
@@ -162,10 +162,10 @@ autocmd BeComplete BufWrite * call becomplete#lsp#document#modified(expand("<afi
 " shutdown
 autocmd BeComplete VimLeave * call becomplete#lsp#server#stop_all()
 
-" select the first function argument upon completion
-" "<esc><right>" is required to avoid ending up in "insert select" mode
-autocmd BeComplete CompleteDone * if becomplete#complete#arg_select(1) == 0 | call feedkeys("\<esc>\<right>") | endif
+" completion handler
+autocmd BeComplete CompleteDone * call becomplete#complete#done()
 "}}}
+
 
 """"
 "" mappings
@@ -173,7 +173,7 @@ autocmd BeComplete CompleteDone * if becomplete#complete#arg_select(1) == 0 | ca
 
 "{{{
 " user-triggered completion
-call util#map#i(g:becomplete_key_complete, "<c-r>=becomplete#complete#on_user()<cr>", "noescape noinsert")
+call util#map#i(g:becomplete_key_complete, "<c-r>=becomplete#complete#user()<cr>", "noescape noinsert")
 call util#map#i(g:becomplete_key_complete_prev, "pumvisible() ? '\<c-p>' : '" . g:becomplete_key_complete_prev . "'", "<expr> noescape noinsert")
 
 " popup menu navigation
@@ -182,8 +182,8 @@ call util#map#i("<up>", "pumvisible() ? '\<c-p>' : '<up>'", "<expr> noescape noi
 call util#map#i("<down>", "pumvisible() ? '\<c-n>' : '<down>'", "<expr> noescape noinsert")
 
 " function argument selection
-call util#map#nvi(g:becomplete_key_arg_next, "<esc>:call becomplete#complete#arg_select(1)<cr>")
-call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#arg_select(0)<cr>")
+call util#map#nvi(g:becomplete_key_arg_next, "<esc>:call becomplete#complete#signature_select(1)<cr>")
+call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#signature_select(0)<cr>")
 
 " goto
 call util#map#n(g:becomplete_key_goto, "<insert><c-r>=becomplete#goto#decldef()<cr>")

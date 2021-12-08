@@ -3,26 +3,11 @@
 """"
 
 "{{{
-" \brief	callback to handle the result of an lsp completion request and
-"			show a popup menu
-"
-" \param	items	list with vim complete-items
-function s:completion_hdlr(items)
-	call complete(becomplete#complete#find_start() + 1, a:items)
-endfunction
-"}}}
-
-
-""""
-"" global functions
-""""
-
-"{{{
 " \brief	find the column in the current line which is the base of the
 "			completion, i.e. the beginning of the word under the cursor
 "
 " \return	column indicating the completion start
-function becomplete#complete#find_start()
+function s:find_start()
     let l:line = getline('.')
     let l:start = col('.') - 1
 
@@ -38,25 +23,28 @@ endfunction
 " \brief	annotate function signature arguments with markers to jump between
 "			the arguments
 "
-" \param	str		string to annotate
+" \param	signature		string containing a function signature, i.e.
+"							starting on '(' and ending on ')'
 "
 " \return	annotated string
-function becomplete#complete#arg_annotate(str)
-	" locate signature in a:str
-	let l:sig_start = stridx(a:str, "(")
-	let l:sig_end = strridx(a:str, ")")
-	let l:sig = a:str[l:sig_start + 1:l:sig_end - 1]
+function s:annotate_signature(sig)
+	let l:sig = a:sig[1:-2]
 
-	" return if no or empty signature found
-	" remove trailing ')' to be consistent with amended signatures
-	if l:sig_start == -1 || l:sig_end == -1 || len(l:sig) == 0
-		return a:str[-1:-1] == ')' ? a:str[:-2] : a:str
+	" return on invalid signature format
+	if a:sig[0] != "(" || a:sig[-1:-1] != ")"
+		return ""
+	endif
+
+	" return on empty signature
+	" remove closing ')' to be consistent with annotated signatures
+	if len(l:sig) == 0
+		return "("
 	endif
 
 	" surround function arguments with markers
 	let l:braces = 0
 	let l:in_arg = 1
-	let l:anno = a:str[0:l:sig_start] . g:becomplete_arg_mark_left
+	let l:anno = "(" . g:becomplete_arg_mark_left
 
 	for l:i in range(0, len(l:sig))
 		let l:c = l:sig[l:i]
@@ -86,50 +74,25 @@ endfunction
 "}}}
 
 "{{{
-" \brief	highlight a string in the current line surrounded by function
-"			argument markers as annotated by
-"			s:becomplete#complete#arg_annotate()
+" \brief	callback to handle the result of an lsp completion request and
+"			show a popup menu
 "
-" \param	forward		1 to select the next argument
-"						otherwise select the previous argument
-"
-" \return	0 an argument has been highlighted
-"			-1 otherwise
-function becomplete#complete#arg_select(forward)
-	let l:line = getline('.')
-	let l:llen = len(line)
-	let l:col = col('.')
-
-	" find next argument, surrounded by markers
-	if a:forward == 1
-		let l:col = (l:col >= l:llen) ? 1 : l:col - 1
-
-		let l:left = stridx(l:line, g:becomplete_arg_mark_left, l:col)
-		let l:right = stridx(l:line, g:becomplete_arg_mark_right, l:left)
-
-	else
-		let l:right = strridx(l:line, g:becomplete_arg_mark_right, l:col - len(g:becomplete_arg_mark_right) - 1)
-		let l:right = (l:right == -1) ? strridx(l:line, g:becomplete_arg_mark_right, l:llen) : l:right
-		let l:left = strridx(l:line, g:becomplete_arg_mark_left, l:right)
-	endif
-
-	" select argument
-	if l:left != -1 && l:right != -1
-		call cursor(0, l:left + 1)
-		exec "normal v" . (l:right + len(g:becomplete_arg_mark_right) - l:left - 1) . "l\<c-g>"
-
-		return 0
-	endif
-
-	return -1
+" \param	items	list with vim complete-items
+function s:completion_hdlr(items)
+	call complete(s:find_start() + 1, a:items)
 endfunction
 "}}}
+
+
+""""
+"" global functions
+""""
 
 "{{{
 " \brief	user-triggered lsp completion wrapper
 "
 " \return	string to be used with an "<c-r>=" mapping
-function becomplete#complete#on_user()
+function becomplete#complete#user()
 	if pumvisible()
 		return "\<c-n>"
 	endif
@@ -164,7 +127,7 @@ endfunction
 " \param	seq		string with a trigger sequence
 "
 " \return	a:key
-function becomplete#complete#on_key(key, seq)
+function becomplete#complete#key(key, seq)
 	let l:line = getline(".")
 	let l:col = col(".")
 
@@ -173,5 +136,70 @@ function becomplete#complete#on_key(key, seq)
 	endif
 
 	return a:key
+endfunction
+"}}}
+
+"{{{
+" \brief	Annotates a function signature if available, assuming the
+"			completion item's "user_data" key contains signature information.
+"			If a signature is present, the first argument of the function is
+"			selected.
+function becomplete#complete#done()
+	let l:signature = s:annotate_signature(get(v:completed_item, "user_data", ""))
+
+	if l:signature == ""
+		return
+	endif
+
+	" insert signature
+	exec "normal! i" . l:signature
+
+	" select the first function argument upon completion "<esc>" is required
+	" to avoid ending up in "insert select" mode
+	if becomplete#complete#signature_select(1) == 0
+		call feedkeys("\<esc>")
+	endif
+
+	call feedkeys("\<right>")
+endfunction
+"}}}
+
+"{{{
+" \brief	highlight a string in the current line surrounded by function
+"			argument markers as annotated by
+"			s:becomplete#complete#arg_annotate()
+"
+" \param	forward		1 to select the next argument
+"						otherwise select the previous argument
+"
+" \return	0 an argument has been highlighted
+"			-1 otherwise
+function becomplete#complete#signature_select(forward)
+	let l:line = getline('.')
+	let l:llen = len(line)
+	let l:col = col('.')
+
+	" find next argument, surrounded by markers
+	if a:forward == 1
+		let l:col = (l:col >= l:llen) ? 1 : l:col - 1
+
+		let l:left = stridx(l:line, g:becomplete_arg_mark_left, l:col)
+		let l:right = stridx(l:line, g:becomplete_arg_mark_right, l:left)
+
+	else
+		let l:right = strridx(l:line, g:becomplete_arg_mark_right, l:col - len(g:becomplete_arg_mark_right) - 1)
+		let l:right = (l:right == -1) ? strridx(l:line, g:becomplete_arg_mark_right, l:llen) : l:right
+		let l:left = strridx(l:line, g:becomplete_arg_mark_left, l:right)
+	endif
+
+	" select argument
+	if l:left != -1 && l:right != -1
+		call cursor(0, l:left + 1)
+		exec "normal v" . (l:right + len(g:becomplete_arg_mark_right) - l:left - 1) . "l\<c-g>"
+
+		return 0
+	endif
+
+	return -1
 endfunction
 "}}}

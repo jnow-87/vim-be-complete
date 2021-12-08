@@ -43,8 +43,9 @@ let s:complete_kinds = [
 """"
 
 "{{{
-" \brief	convert the lsp completion items to a list of dictionaries with
-"			the abbr, word, kind and menu keys according to vim complete-items
+" \brief	Convert the lsp completion items to a list of dictionaries with
+"			the word, kind, menu and dup keys according to vim complete-items.
+"			The "user_data" key is used for function signature information.
 "
 " \param	response	result of the lsp completion request
 "
@@ -76,10 +77,11 @@ function s:item_filter(response)
 		\ )
 
 		call add(l:lst, {
-		\		"abbr": l:insert,
-		\		"word": becomplete#complete#arg_annotate(l:label),
+		\		"word": l:insert,
 		\		"kind": l:kind,
 		\		"menu": l:detail . " " . l:label,
+		\		"user_data": l:label[len(l:insert):],
+		\		"dup": 1,
 		\	}
 		\ )
 	endfor
