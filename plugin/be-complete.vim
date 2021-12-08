@@ -109,48 +109,16 @@ function s:buffer_init()
 		\	. "start='" . g:becomplete_arg_mark_left
 		\	. "' end='" . g:becomplete_arg_mark_right
 		\	. "' concealends"
+
+		" language-specific completion triggers
+		for l:seq in get(g:becomplete_language_triggers, l:filetype, [])
+			let l:key = l:seq[-1:]
+			call util#map#i(l:key,
+			\	"<c-r>=becomplete#complete#on_key('" . l:key . "', '" . l:seq . "')<cr>",
+			\	"<buffer> noescape noinsert"
+			\ )
+		endfor
 	endif
-
-	" user-triggered completion
-	call util#map#i(g:becomplete_key_complete,
-	\	"<c-r>=becomplete#complete#on_user()<cr>",
-	\	"<buffer> noescape noinsert"
-	\ )
-
-	call util#map#i(g:becomplete_key_complete_prev,
-	\	"pumvisible() ? '\<c-p>' : '" . g:becomplete_key_complete_prev . "'",
-	\	"<buffer> <expr> noescape noinsert"
-	\ )
-
-	call util#map#i("<cr>", "pumvisible() ? '\<c-y>' : '<cr>'", "<buffer> <expr> noescape noinsert")
-	call util#map#i("<up>", "pumvisible() ? '\<c-p>' : '<up>'", "<buffer> <expr> noescape noinsert")
-	call util#map#i("<down>", "pumvisible() ? '\<c-n>' : '<down>'", "<buffer> <expr> noescape noinsert")
-
-	" language-specific completion
-	for l:seq in get(g:becomplete_language_triggers, l:filetype, [])
-		let l:key = l:seq[-1:]
-		call util#map#i(l:key,
-		\	"<c-r>=becomplete#complete#on_key('" . l:key . "', '" . l:seq . "')<cr>",
-		\	"<buffer> noescape noinsert"
-		\ )
-	endfor
-
-	" function argument selection
-	call util#map#nvi(g:becomplete_key_arg_next, "<esc>:call becomplete#complete#arg_select(1)<cr>", "<buffer>")
-	call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#arg_select(0)<cr>", "<buffer>")
-
-	" select the first function argument upon completion
-	" "<esc><right>" is required to avoid ending up in "insert select" mode
-	autocmd BeComplete CompleteDone <buffer>
-	\	if becomplete#complete#arg_select(1) == 0 | call feedkeys("\<esc>\<right>") | endif
-
-	" goto
-	call util#map#n(g:becomplete_key_goto, "<insert><c-r>=becomplete#goto#decldef()<cr>", "<buffer>")
-
-	" symbol
-	call util#map#n(g:becomplete_key_symbol_all, "<insert><c-r>=becomplete#symbol#all()<cr>", "<buffer>")
-	call util#map#n(g:becomplete_key_symbol_functions, "<insert><c-r>=becomplete#symbol#functions()<cr>", "<buffer>")
-	call util#map#n(g:becomplete_key_symbol_funchead, "<insert><c-r>=becomplete#symbol#function_head()<cr>", "<buffer>")
 endfunction
 "}}}
 
@@ -158,11 +126,9 @@ endfunction
 " \brief	cleanup buffer data
 function s:buffer_unload()
 	let l:file = expand("<afile>:p")
-
 	let l:server = becomplete#lsp#server#get(l:file)
-	call l:server["doc_close"](l:file)
 
-	exec "autocmd! BeComplete CompleteDone <buffer=" . l:bufnr . ">"
+	call l:server["doc_close"](l:file)
 endfunction
 "}}}
 
@@ -195,4 +161,35 @@ autocmd BeComplete BufWrite * call becomplete#lsp#document#modified(expand("<afi
 
 " shutdown
 autocmd BeComplete VimLeave * call becomplete#lsp#server#stop_all()
+
+" select the first function argument upon completion
+" "<esc><right>" is required to avoid ending up in "insert select" mode
+autocmd BeComplete CompleteDone * if becomplete#complete#arg_select(1) == 0 | call feedkeys("\<esc>\<right>") | endif
+"}}}
+
+""""
+"" mappings
+""""
+
+"{{{
+" user-triggered completion
+call util#map#i(g:becomplete_key_complete, "<c-r>=becomplete#complete#on_user()<cr>", "noescape noinsert")
+call util#map#i(g:becomplete_key_complete_prev, "pumvisible() ? '\<c-p>' : '" . g:becomplete_key_complete_prev . "'", "<expr> noescape noinsert")
+
+" popup menu navigation
+call util#map#i("<cr>", "pumvisible() ? '\<c-y>' : '<cr>'", "<expr> noescape noinsert")
+call util#map#i("<up>", "pumvisible() ? '\<c-p>' : '<up>'", "<expr> noescape noinsert")
+call util#map#i("<down>", "pumvisible() ? '\<c-n>' : '<down>'", "<expr> noescape noinsert")
+
+" function argument selection
+call util#map#nvi(g:becomplete_key_arg_next, "<esc>:call becomplete#complete#arg_select(1)<cr>")
+call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#arg_select(0)<cr>")
+
+" goto
+call util#map#n(g:becomplete_key_goto, "<insert><c-r>=becomplete#goto#decldef()<cr>")
+
+" symbol
+call util#map#n(g:becomplete_key_symbol_all, "<insert><c-r>=becomplete#symbol#all()<cr>")
+call util#map#n(g:becomplete_key_symbol_functions, "<insert><c-r>=becomplete#symbol#functions()<cr>")
+call util#map#n(g:becomplete_key_symbol_funchead, "<insert><c-r>=becomplete#symbol#function_head()<cr>")
 "}}}
