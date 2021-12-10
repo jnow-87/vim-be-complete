@@ -50,30 +50,14 @@ endfunction
 "}}}
 
 "{{{
-" \brief	Callback function for synchronous lsp request.
-"			Sets the associated request's "result" member.
-"
-" \param	server		language server object the result is for
-" \param	result		lsp result dictionary
-" \param	request_id	id of the request
-function s:sync_request_hdlr(server, result, request_id)
-	call becomplete#log#msg("sync hdlr " . a:request_id . " " . string(a:result))
-
-	let l:req = a:server["requests"][a:request_id]
-	let l:req["result"] = a:result
-endfunction
-"}}}
-
-"{{{
-" \brief	Wait function for synchronous lsp requests.
-"			Blocks execution until a result or a timeout occur.
+" \brief	timed-out wait for the given request's response
 "
 " \param	request		request object to listen on
 " \param	timeout_ms	milliseconds to wait upon signaling a timeout
 "
-" \return	Dictionary containing the lsp result. In case of a timeout and
+" \return	Dictionary containing the lsp result. In case of a timeout an
 "			empty dictionary is returned.
-function s:sync_request_wait(request, timeout_ms)
+function s:await_response(request, timeout_ms)
 	let l:max_retries = a:timeout_ms / 10
 	let l:retry = 0
 
@@ -160,7 +144,8 @@ function s:handle_message(server, content)
 		let l:request = a:server["requests"][l:id]
 		let l:result = a:content["result"]
 
-		call l:request["hdlr"](a:server, l:result, l:id)
+		call becomplete#log#msg("response for " . l:request["method"] . ": " . string(l:result))
+		let l:request["result"] = l:result
 
 	catch /^Vim(let):E716.*\"id\"/
 		call s:handle_notification(a:server, a:content)
@@ -221,36 +206,25 @@ endfunction
 " \param	server		lsp server object
 " \param	method		lsp method to call
 " \param	params		parameters for a:method
-" \param	hdlr		function to call upon a response
 "
-" \return	if a:hdlr is v:none the result of the lsp response is returned as
-"			a dictionary
-"			if a:hdlr is not v:none an empty dictionary is returned, instead
-"			the result is forwarded to the specified handler
-"			if the server is not running while not currently performing the
+" \return	if the server is not running while not currently performing the
 "			server initialisation, an empty dictionary is returned
-function becomplete#lsp#base#request(server, method, params, hdlr=v:none)
+"			otherwise the lsp result is returned as a dictionary
+function becomplete#lsp#base#request(server, method, params)
 	if job_status(a:server["job"]) != "run" || (a:server["initialised"] != 1 && a:method != "initialize")
 		call becomplete#log#error("request \"" . a:method . "\": server not initialised")
 		return {}
 	endif
 
 	let l:id = a:server["request-id"]
-	let l:req = {
-	\	"method": a:method,
-	\	"hdlr": (a:hdlr == v:none) ? function("s:sync_request_hdlr") : a:hdlr
-	\ }
+	let l:req = { "method": a:method }
 
 	let a:server["requests"][l:id] = l:req
 	let a:server["request-id"] += 1
 
 	call s:send(a:server["job"], s:format(a:method, a:params, l:id))
 
-	if a:hdlr == v:none
-		return s:sync_request_wait(l:req, a:server["timeout-ms"])
-	endif
-
-	return {}
+	return s:await_response(l:req, a:server["timeout-ms"])
 endfunction
 "}}}
 

@@ -3,9 +3,6 @@
 """"
 
 "{{{
-" handler to call upon asynchronous completion finished
-let s:async_hdlr = v:none
-
 " string representations for the lsp completion item kinds
 let s:complete_kinds = [
 \	g:becomplete_kindsym_undef,
@@ -90,58 +87,20 @@ function s:item_filter(response)
 endfunction
 "}}}
 
-"{{{
-" \brief	callback function to be used with the lsp completion request
-"
-" \param	server		lsp server object
-" \param	result		lsp completion request result
-" \param	request_id	lsp request id
-function s:completion_hdlr(server, result, request_id)
-	call s:async_hdlr(s:item_filter(a:result))
-endfunction
-"}}}
-
 
 """"
 "" global functions
 """"
 
 "{{{
-" \brief	lsp completion wrapper with asynchronous execution, i.e. the
-"			function returns without waiting for the request to finish
+" \brief	lsp completion wrapper
 "
 " \param	file	file name to do the completion for
 " \param	line	line within a:file
 " \param	column	column within a:line
-" \param	hdlr	handler to call with the completion result
-"
-" \return	empty list
-function becomplete#lsp#complete#async(file, line, column, hdlr)
-	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
-
-	let s:async_hdlr = a:hdlr
-	call becomplete#lsp#base#request(
-	\	becomplete#lsp#server#get(a:file),
-	\	"textDocument/completion",
-	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column),
-	\	function("s:completion_hdlr")
-	\ )
-
-	return []
-endfunction
-"}}}
-
-"{{{
-" \brief	lsp completion wrapper with synchronous execution, i.e. the
-"			function returns the completion items
-"
-" \param	file	file name to do the completion for
-" \param	line	line within a:file
-" \param	column	column within a:line
-" \param	hdlr	handler to call with the completion result
 "
 " \return	list of vim completion items, cf. s:item_filter()
-function becomplete#lsp#complete#sync(file, line, column, hdlr=v:none)
+function becomplete#lsp#complete#completion(file, line, column)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
 	let l:res = becomplete#lsp#base#request(

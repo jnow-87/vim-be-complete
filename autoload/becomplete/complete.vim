@@ -73,16 +73,6 @@ function s:annotate_signature(sig)
 endfunction
 "}}}
 
-"{{{
-" \brief	callback to handle the result of an lsp completion request and
-"			show a popup menu
-"
-" \param	items	list with vim complete-items
-function s:completion_hdlr(items)
-	call complete(s:find_start() + 1, a:items)
-endfunction
-"}}}
-
 
 """"
 "" global functions
@@ -110,7 +100,8 @@ function becomplete#complete#user()
 	" lsp or fallback completion
 	if l:server["initialised"] == 1
 		call l:server["doc_update"](l:file)
-		call s:completion_hdlr(l:server["complete"](l:file, line("."), col("."), function("s:completion_hdlr")))
+		let l:items = l:server["complete"](l:file, line("."), col("."))
+		call complete(s:find_start() + 1, l:items)
 
 		return ""
 
