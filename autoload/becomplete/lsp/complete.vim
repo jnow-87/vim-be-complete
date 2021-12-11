@@ -104,7 +104,7 @@ function becomplete#lsp#complete#completion(file, line, column)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
 
 	let l:res = becomplete#lsp#base#request(
-	\	becomplete#lsp#server#get(a:file),
+	\	becomplete#server#get(a:file),
 	\	"textDocument/completion",
 	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
 	\ )

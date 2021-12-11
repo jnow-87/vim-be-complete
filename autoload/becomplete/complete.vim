@@ -88,7 +88,7 @@ function becomplete#complete#user()
 	endif
 
 	let l:file = expand("%:p")
-	let l:server = becomplete#lsp#server#get(l:file)
+	let l:server = becomplete#server#get(l:file)
 
 	let l:char = getline('.')[col(".") - 2]
 

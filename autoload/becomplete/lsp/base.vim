@@ -176,6 +176,12 @@ endfunction
 " \param	msg			string with the received message
 function becomplete#lsp#base#rx_hdlr(channel, msg)
 	let l:server = becomplete#lsp#server#get(ch_getjob(a:channel))
+
+	if l:server == {}
+		call becomplete#log#error("received data for non-existing server")
+		return
+	endif
+
 	let l:server["data"] .= a:msg
 
 	while len(l:server["data"])

@@ -84,7 +84,7 @@ function s:init()
 
 	" register servers
 	for l:cfg in g:becomplete_language_servers
-		call becomplete#lsp#server#register(l:cfg["command"], l:cfg["filetypes"], l:cfg["timeout-ms"])
+		call becomplete#server#register(l:cfg["command"], l:cfg["filetypes"], l:cfg["timeout-ms"])
 
 		for l:ftype in l:cfg["filetypes"]
 			let g:becomplete_language_triggers[l:ftype] = l:cfg["trigger"]
@@ -94,15 +94,16 @@ endfunction
 "}}}
 
 "{{{
-" \brief	buffer init
-function s:buffer_init()
-	let l:file = expand("%:p")
-	let l:filetype = getbufvar("", "&filetype")
+" \brief	buffer initialisation
+"
+" \param	file	file name
+function s:buffer_init(file)
+	let l:ftype = getbufvar(a:file, "&filetype")
 
-	let l:server = becomplete#lsp#server#start(l:filetype)
+	let l:server = becomplete#server#start(l:ftype)
 
 	if l:server["initialised"] == 1
-		call l:server["doc_open"](l:file)
+		call l:server["doc_open"](a:file)
 
 		" function argument highlighting
 		exec "syn region becomplete_arg matchgroup=None "
@@ -111,7 +112,7 @@ function s:buffer_init()
 		\	. "' concealends"
 
 		" language-specific completion triggers
-		for l:seq in get(g:becomplete_language_triggers, l:filetype, [])
+		for l:seq in get(g:becomplete_language_triggers, l:ftype, [])
 			let l:key = l:seq[-1:]
 			call util#map#i(l:key,
 			\	"<c-r>=becomplete#complete#key('" . l:key . "', '" . l:seq . "')<cr>",
@@ -123,12 +124,22 @@ endfunction
 "}}}
 
 "{{{
-" \brief	cleanup buffer data
-function s:buffer_unload()
-	let l:file = expand("<afile>:p")
-	let l:server = becomplete#lsp#server#get(l:file)
+" \brief	buffer cleanup
+"
+" \param	file	file name
+function s:buffer_unload(file)
+	let l:server = becomplete#server#get(a:file)
+	call l:server["doc_close"](a:file)
+endfunction
+"}}}
 
-	call l:server["doc_close"](l:file)
+"{{{
+" \brief	signal buffer modification
+"
+" \param	file	file name
+function s:buffer_modified(file)
+	let l:server = becomplete#server#get(a:file)
+	call l:server["doc_modified"](a:file)
 endfunction
 "}}}
 
@@ -155,12 +166,12 @@ command -nargs=0 BeCompleteLog call becomplete#log#show()
 
 "{{{
 " buffer control
-autocmd BeComplete FileType * call s:buffer_init()
-autocmd BeComplete BufUnload * call s:buffer_unload()
-autocmd BeComplete BufWrite * call becomplete#lsp#document#modified(expand("<afile>:p"))
+autocmd BeComplete FileType * call s:buffer_init(expand("<afile>:p"))
+autocmd BeComplete BufUnload * call s:buffer_unload(expand("<afile>:p"))
+autocmd BeComplete BufWrite * call s:buffer_modified(expand("<afile>:p"))
 
 " shutdown
-autocmd BeComplete VimLeave * call becomplete#lsp#server#stop_all()
+autocmd BeComplete VimLeave * call becomplete#server#stop_all()
 
 " completion handler
 autocmd BeComplete CompleteDone * call becomplete#complete#done()

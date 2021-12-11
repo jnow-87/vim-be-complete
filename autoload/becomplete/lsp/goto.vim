@@ -50,7 +50,7 @@ function becomplete#lsp#goto#definition(file, line, column)
 
 	return s:item_filter(
 	\	becomplete#lsp#base#request(
-	\		becomplete#lsp#server#get(a:file),
+	\		becomplete#server#get(a:file),
 	\		"textDocument/definition",
 	\		becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
 	\	),
@@ -72,7 +72,7 @@ function becomplete#lsp#goto#declaration(file, line, column)
 
 	return s:item_filter(
 	\	becomplete#lsp#base#request(
-	\		becomplete#lsp#server#get(a:file),
+	\		becomplete#server#get(a:file),
 	\		"textDocument/declaration",
 	\		becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
 	\	),
