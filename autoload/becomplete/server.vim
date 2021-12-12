@@ -93,6 +93,11 @@ function becomplete#server#start(filetype)
 		call becomplete#lsp#server#start(l:server)
 	endif
 
+	if l:server["initialised"] == 0
+		call becomplete#log#msg("falling back to ctags implementation for file type: " . a:filetype)
+		call becomplete#ctags#server#start(l:server, a:filetype)
+	endif
+
 	let s:server_types[a:filetype] = l:server
 
 	return l:server
@@ -107,7 +112,7 @@ function becomplete#server#stop_all()
 			continue
 		endif
 
-		call becomplete#log#msg("trigger server shutdown: " . l:server["command"][0])
+		call becomplete#log#msg("trigger server shutdown: " . get(l:server["command"], 0, "ctags"))
 
 		call l:server["shutdown"](l:server)
 		let l:server["initialised"] = 0
@@ -123,6 +128,24 @@ endfunction
 " \return	server object
 function becomplete#server#get(file)
 	return get(s:server_types, getbufvar(a:file, "&filetype"), s:server())
+endfunction
+"}}}
+
+"{{{
+" \brief	check if the server supports a certain feature/callback
+"
+" \param	server		server object
+" \param	callback	string identifying the callback to check, cf. the
+"						functions set in s:server()
+"
+" \return	v:true if the callback is supported
+"			v:false otherwise
+function becomplete#server#supports(server, callback)
+	if has_key(a:server, a:callback) && a:server[a:callback] != function("becomplete#server#nop")
+		return v:true
+	endif
+
+	return v:false
 endfunction
 "}}}
 

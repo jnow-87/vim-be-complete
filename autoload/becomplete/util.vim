@@ -45,3 +45,43 @@ function becomplete#util#buftext(file)
 	return join(getbufline(a:file, 1, '$'), "\n")."\n"
 endfunction
 "}}}
+
+
+"{{{
+" \brief	find the index in a string which is the base of the word at a:idx
+"
+" \param	line	string to search in
+" \param	idx		index into a:line where to start searching
+"
+" \return	index into a:line indicating the start of the word
+function becomplete#util#word_base(line, idx)
+    let l:start = a:idx - 1
+
+    while l:start > 0 && a:line[l:start - 1] =~ '\i\|\k'
+      let l:start -= 1
+    endwhile
+
+    return l:start
+endfunction
+"}}}
+
+"{{{
+" \brief	return the word at the given file location
+"
+" \param	file	file name
+" \param	line	line number
+" \param	column	column number
+"
+" \return	word at the given location
+function becomplete#util#word_at(file, line, column)
+	let l:line = get(getbufline(a:file, a:line), 0, "")
+	let l:start = becomplete#util#word_base(l:line, a:column)
+	let l:end = l:start
+
+    while l:line[l:end + 1] =~ '\i\|\k'
+      let l:end += 1
+    endwhile
+
+	return l:line[l:start:l:end]
+endfunction
+"}}}

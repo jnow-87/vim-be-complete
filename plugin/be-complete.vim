@@ -50,6 +50,9 @@ let g:becomplete_kindsym_variable = get(g:, "becomplete_kindsym_variable", "v")
 let g:becomplete_kindsym_macro = get(g:, "becomplete_kindsym_macro", "d")
 let g:becomplete_kindsym_file = get(g:, "becomplete_kindsym_file", "i")
 let g:becomplete_kindsym_text = get(g:, "becomplete_kindsym_file", "s")
+
+let g:becomplete_type_declaration = get(g:, "becomplete_type_declaration", "dcl")
+let g:becomplete_type_definition = get(g:, "becomplete_type_definition", "def")
 "}}}
 
 
