@@ -161,7 +161,7 @@ function becomplete#goto#decldef()
 	let l:file = expand("%:p")
 	let l:line = line(".")
 	let l:col = col(".")
-	let l:server = becomplete#lsp#server#get(l:file)
+	let l:server = becomplete#server#get(l:file)
 
 	call l:server["doc_update"](l:file)
 	let l:defs = l:server["goto_def"](l:file, l:line, l:col)

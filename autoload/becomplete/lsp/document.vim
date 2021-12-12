@@ -27,7 +27,7 @@ function becomplete#lsp#document#open(file)
 	let s:modified[a:file] = 0
 
 	call becomplete#lsp#base#notification(
-	\	becomplete#lsp#server#get(a:file),
+	\	becomplete#server#get(a:file),
 	\	"textDocument/didOpen",
 	\	becomplete#lsp#param#doc_item(a:file, s:versions[a:file])
 	\ )
@@ -44,7 +44,7 @@ function becomplete#lsp#document#close(file)
 	endif
 
 	call becomplete#lsp#base#notification(
-	\	becomplete#lsp#server#get(a:file),
+	\	becomplete#server#get(a:file),
 	\	"textDocument/didClose",
 	\	becomplete#lsp#param#doc(a:file)
 	\ )
@@ -64,7 +64,7 @@ function becomplete#lsp#document#update(file)
 	let s:modified[a:file] = 0
 
 	call becomplete#lsp#base#notification(
-	\	becomplete#lsp#server#get(a:file),
+	\	becomplete#server#get(a:file),
 	\	"textDocument/didChange",
 	\	becomplete#lsp#param#doc_changed(a:file, s:versions[a:file], becomplete#util#buftext(a:file))
 	\ )

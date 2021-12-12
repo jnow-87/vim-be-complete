@@ -98,7 +98,7 @@ function becomplete#lsp#symbol#file(file, kinds)
 
 	return s:parse(
 	\	becomplete#lsp#base#request(
-	\		becomplete#lsp#server#get(a:file),
+	\		becomplete#server#get(a:file),
 	\		"textDocument/documentSymbol",
 	\		becomplete#lsp#param#doc(a:file)
 	\	),

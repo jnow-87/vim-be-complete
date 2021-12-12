@@ -3,23 +3,6 @@
 """"
 
 "{{{
-" \brief	find the column in the current line which is the base of the
-"			completion, i.e. the beginning of the word under the cursor
-"
-" \return	column indicating the completion start
-function s:find_start()
-    let l:line = getline('.')
-    let l:start = col('.') - 1
-
-    while l:start > 0 && l:line[l:start - 1] =~ '\i\|\k'
-      let l:start -= 1
-    endwhile
-
-    return l:start
-endfunction
-"}}}
-
-"{{{
 " \brief	annotate function signature arguments with markers to jump between
 "			the arguments
 "
@@ -73,16 +56,6 @@ function s:annotate_signature(sig)
 endfunction
 "}}}
 
-"{{{
-" \brief	callback to handle the result of an lsp completion request and
-"			show a popup menu
-"
-" \param	items	list with vim complete-items
-function s:completion_hdlr(items)
-	call complete(s:find_start() + 1, a:items)
-endfunction
-"}}}
-
 
 """"
 "" global functions
@@ -98,7 +71,7 @@ function becomplete#complete#user()
 	endif
 
 	let l:file = expand("%:p")
-	let l:server = becomplete#lsp#server#get(l:file)
+	let l:server = becomplete#server#get(l:file)
 
 	let l:char = getline('.')[col(".") - 2]
 
@@ -108,9 +81,10 @@ function becomplete#complete#user()
 	endif
 
 	" lsp or fallback completion
-	if l:server["initialised"] == 1
+	if l:server["initialised"] == 1 && becomplete#server#supports(l:server, "complete")
 		call l:server["doc_update"](l:file)
-		call s:completion_hdlr(l:server["complete"](l:file, line("."), col("."), function("s:completion_hdlr")))
+		let l:items = l:server["complete"](l:file, line("."), col("."))
+		call complete(becomplete#util#word_base(getline("."), col(".")) + 1, l:items)
 
 		return ""
 

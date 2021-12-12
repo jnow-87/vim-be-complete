@@ -3,17 +3,6 @@
 """"
 
 "{{{
-" \brief	provide an empty list
-"			intended to be used as callback for lsp requests that a server
-"			does not implement
-"
-" \return	empty list
-function becomplete#lsp#response#unavail_list(...)
-	return []
-endfunction
-"}}}
-
-"{{{
 " \brief	convert the given lsp response to a list if it isn't one already
 "
 " \param	response	response to convert
