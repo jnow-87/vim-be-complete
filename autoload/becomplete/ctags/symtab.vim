@@ -385,3 +385,34 @@ function becomplete#ctags#symtab#filetypes()
 	return values(s:lang_map)
 endfunction
 "}}}
+
+"{{{
+" \brief	print the symbol tables to the plugin log
+function becomplete#ctags#symtab#print()
+	call becomplete#log#show()
+
+	call becomplete#log#msg("symbol table")
+
+	for l:name in keys(s:symtab)
+		call becomplete#log#msg(" symbol: " . l:name)
+
+		for l:file in keys(s:symtab[l:name])
+			call becomplete#log#msg("  file: " . l:file)
+
+			for l:sym in s:symtab[l:name][l:file]
+				call becomplete#log#msg("   " . string(s:symtab[l:name]))
+			endfor
+		endfor
+	endfor
+
+	call becomplete#log#msg("file symbol table")
+
+	for l:file in keys(s:filesymtab)
+		call becomplete#log#msg(" file: " . l:file)
+
+		for l:sym in s:filesymtab[l:file]
+			call becomplete#log#msg("  " . string(s:symtab[l:name]))
+		endfor
+	endfor
+endfunction
+"}}}

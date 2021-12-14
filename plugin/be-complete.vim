@@ -167,6 +167,7 @@ call s:init()
 
 "{{{
 command -nargs=0 BeCompleteLog call becomplete#log#show()
+command -nargs=0 BeCompleteCtagsSymtab call becomplete#ctags#symtab#print()
 "}}}
 
 
