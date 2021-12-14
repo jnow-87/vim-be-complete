@@ -37,7 +37,7 @@ function becomplete#ctags#server#start(server, filetype)
 
 	let a:server["shutdown"] = function("s:shutdown")
 
-	call becomplete#ctags#symtab#init()
+	call becomplete#ctags#symtab#init(fnamemodify(bufname(), ":h"), a:filetype)
 
 	let a:server["initialised"] = 1
 endfunction

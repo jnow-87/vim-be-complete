@@ -9,6 +9,7 @@ let s:lang_config = {
 \	"undef": {
 \		"kinds": {},
 \		"prototype_kind": "",
+\		"ctags_string": "",
 \	},
 \	"asm": {
 \		"kinds": {
@@ -18,6 +19,7 @@ let s:lang_config = {
 \			"t": g:becomplete_kindsym_type,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Asm",
 \	},
 \	"c": {
 \		"kinds": {
@@ -37,6 +39,7 @@ let s:lang_config = {
 \			"x": g:becomplete_kindsym_variable,
 \		},
 \		"prototype_kind": "s:becomplete_kindsym_function",
+\		"ctags_string": "C",
 \	},
 \	"cpp": {
 \		"kinds": {
@@ -56,6 +59,7 @@ let s:lang_config = {
 \			"x": g:becomplete_kindsym_variable,
 \		},
 \		"prototype_kind": "s:becomplete_kindsym_function",
+\		"ctags_string": "C++",
 \	},
 \	"vim": {
 \		"kinds": {
@@ -66,18 +70,21 @@ let s:lang_config = {
 \			"v": g:becomplete_kindsym_variable,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Vim",
 \	},
 \	"sh": {
 \		"kinds": {
 \			"f": g:becomplete_kindsym_function,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Sh",
 \	},
 \	"make": {
 \		"kinds": {
 \			"m": g:becomplete_kindsym_macro,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Make",
 \	},
 \	"python": {
 \		"kinds": {
@@ -88,6 +95,7 @@ let s:lang_config = {
 \			"i": g:becomplete_kindsym_file,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Python",
 \	},
 \	"java": {
 \		"kinds": {
@@ -101,6 +109,7 @@ let s:lang_config = {
 \			"p": g:becomplete_kindsym_namespace,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "Java",
 \	},
 \	"php": {
 \		"kinds": {
@@ -111,6 +120,7 @@ let s:lang_config = {
 \			"j": g:becomplete_kindsym_function,
 \		},
 \		"prototype_kind": "",
+\		"ctags_string": "PHP",
 \	},
 \ }
 "}}}
@@ -235,27 +245,27 @@ endfunction
 
 "{{{
 " \brief	update the symbol table
+" 			if a:pattern is a directory all files of a:filetype are indexed
+" 			if a:pattern is a file it will be indexed forcing a:filetype
 "
 " \param	pattern		string passed on to ctags describing the files to
 "						parse
-function s:update(pattern)
+" \param	filetype	vim file type
+function s:update(pattern, filetype)
+	let l:lang = s:lang_config[a:filetype]["ctags_string"]
 	let l:cmd = "ctags"
 	\ . " -R"
 	\ . " --filter=yes"
-	\ . " --languages=c,c++,asm,vim,sh,make,python,java,php"
+	\ . " --languages=" . l:lang
+	\ . " --" . l:lang . "-kinds=" . s:kinds(a:filetype)
 	\ . " --fields=zknl"
-	\ . " --c-kinds=" . s:kinds("c")
-	\ . " --c++-kinds=" . s:kinds("cpp")
-	\ . " --asm-kinds=" . s:kinds("asm")
-	\ . " --vim-kinds=" . s:kinds("vim")
-	\ . " --sh-kinds=" . s:kinds("sh")
-	\ . " --make-kinds=" . s:kinds("make")
-	\ . " --python-kinds=" . s:kinds("python")
-	\ . " --java-kinds=" . s:kinds("java")
-	\ . " --php-kinds=" . s:kinds("php")
 
+	if filereadable(a:pattern)
+		let l:cmd .= " --language-force=" . l:lang
+	endif
 
-	call becomplete#log#msg("update ctags symbol table for files: " . a:pattern)
+	call becomplete#log#msg("update ctags symbol table for " . a:pattern . ", file type: " . a:filetype)
+	call becomplete#log#msg(" command: " . l:cmd)
 
 	for l:line in systemlist(l:cmd, a:pattern)
 		" parse line
@@ -298,16 +308,20 @@ endfunction
 "{{{
 " \brief	initialise the symbol table, parsing all supported files in the
 "			current directory
-function becomplete#ctags#symtab#init()
-	call s:update(".")
+"
+" \param	location	directory to idnex
+" \param	filetype	vim file type
+function becomplete#ctags#symtab#init(location, filetype)
+	call s:update(a:location, a:filetype)
 endfunction
 "}}}
 
 "{{{
 " \brief	update the symbol table, parsing the given file
 "
-" \param	file	file name
-function becomplete#ctags#symtab#update(file)
+" \param	file		file name
+" \param	filetype	vim file type
+function becomplete#ctags#symtab#update(file, filetype)
 	" remove existing symbols for a:file
 	for l:sym in get(s:filesymtab, a:file, [])
 		let s:symtab[l:sym["name"]][a:file] = []
@@ -316,7 +330,7 @@ function becomplete#ctags#symtab#update(file)
 	let s:filesymtab[a:file] = []
 
 	" parse symbols of a:file
-	call s:update(a:file)
+	call s:update(a:file, a:filetype)
 endfunction
 "}}}
 
