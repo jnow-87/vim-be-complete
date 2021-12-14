@@ -26,7 +26,7 @@ let s:buf_line = 0
 "				a:indent a:var_name <a:var_name content>
 function s:config_str(var_name, indent)
 	exec "let l:val = " . a:var_name
-	return a:indent . a:var_name . ": " . l:val
+	return a:indent . a:var_name . ": " . string(l:val)
 endfunction
 "}}}
 
@@ -60,6 +60,8 @@ function s:init()
 	\	s:config_str("g:becomplete_goto_menu_always", " "),
 	\	s:config_str("g:becomplete_goto_default", " "),
 	\	s:config_str("g:becomplete_goto_preview_width", " "),
+	\	"",
+	\	s:config_str("g:becomplete_ctags_languages", " "),
 	\	"",
 	\	" language servers",
 	\ ]

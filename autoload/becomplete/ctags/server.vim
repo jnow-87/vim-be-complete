@@ -21,7 +21,15 @@ endfunction
 "
 " \param	server	server object
 function becomplete#ctags#server#start(server, filetype)
-	if index(becomplete#ctags#symtab#filetypes(), a:filetype) == -1
+	let l:supported = index(becomplete#ctags#symtab#filetypes(), a:filetype) != -1
+	let l:configured = has_key(g:becomplete_ctags_languages, a:filetype)
+
+	if !l:supported || !l:configured
+		call becomplete#log#msg("file type \"" . a:filetype . "\""
+		\ . " supported (" . l:supported . "),"
+		\ . " configured (" . l:configured . ")"
+		\ )
+
 		return
 	endif
 
@@ -37,7 +45,9 @@ function becomplete#ctags#server#start(server, filetype)
 
 	let a:server["shutdown"] = function("s:shutdown")
 
-	call becomplete#ctags#symtab#init()
+	if get(g:becomplete_ctags_languages[a:filetype], "recursive", 0)
+		call becomplete#ctags#symtab#init(fnamemodify(bufname(), ":h"), a:filetype)
+	endif
 
 	let a:server["initialised"] = 1
 endfunction

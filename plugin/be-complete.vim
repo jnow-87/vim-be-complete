@@ -53,6 +53,13 @@ let g:becomplete_kindsym_text = get(g:, "becomplete_kindsym_file", "s")
 
 let g:becomplete_type_declaration = get(g:, "becomplete_type_declaration", "dcl")
 let g:becomplete_type_definition = get(g:, "becomplete_type_definition", "def")
+
+" dictionary of languages the ctags server shall be used for
+" structure
+" 	<language>: {
+" 		"recursive": <0 | 1>	index all files of that kind during initialisation
+" 	}
+let g:becomplete_ctags_languages = get(g:, "becomplete_ctags_languages", [])
 "}}}
 
 
@@ -160,6 +167,7 @@ call s:init()
 
 "{{{
 command -nargs=0 BeCompleteLog call becomplete#log#show()
+command -nargs=0 BeCompleteCtagsSymtab call becomplete#ctags#symtab#print()
 "}}}
 
 
