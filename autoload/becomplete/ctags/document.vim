@@ -32,7 +32,7 @@ function becomplete#ctags#document#update(file)
 	endif
 
 	let s:modified[a:file] = 0
-	call becomplete#ctags#symtab#update(a:file)
+	call becomplete#ctags#symtab#update(a:file, getbufvar(a:file, "&filetype"))
 endfunction
 "}}}
 
