@@ -69,7 +69,7 @@ function s:syngroup(pattern)
 		return v:false
 	endif
 
-	for l:group in map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+	for l:group in map(synstack(line('.'), col('.') - 1), 'synIDattr(v:val, "name")')
 		if l:group =~? a:pattern
 			return v:true
 		endif

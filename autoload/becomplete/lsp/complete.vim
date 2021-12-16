@@ -50,6 +50,8 @@ let s:complete_kinds = [
 function s:item_filter(response)
 	let l:items = (type(a:response) == type(v:null)) ? [] : get(a:response, "items", a:response)
 	let l:lst = []
+	let l:word = becomplete#util#word_at(bufname(), line("."), col("."))
+	let l:wlen = len(l:word) - 1
 
 	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
 	\	"label", "kind", "detail", "ldetail", "insert", "command", "select", "data", "docu", "edit")
@@ -68,6 +70,11 @@ function s:item_filter(response)
 		let l:cmd = get(l:item, "command", "")
 		let l:data = get(l:item, "data", "")
 		let l:edit = get(l:item, "textEdit", "")
+
+		" skip items that don't start with the word under the cursor
+		if l:word != "" && l:insert[0:l:wlen] !=# l:word
+			continue
+		endif
 
 		" remove non-ascii characters sent by some language servers
 		" e.g. clangd-14 prepends some labels with •
