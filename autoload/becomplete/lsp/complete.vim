@@ -69,6 +69,10 @@ function s:item_filter(response)
 		let l:data = get(l:item, "data", "")
 		let l:edit = get(l:item, "textEdit", "")
 
+		" remove non-ascii characters sent by some language servers
+		" e.g. clangd-14 prepends some labels with •
+		let l:label = substitute(l:label, "[^[:graph:] ]", "", "g")
+
 		call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %10.10s %14.14s %10.10s %15.15s %6.6s %10.10s %s %s",
 		\	l:label, l:kind, l:detail, l:ldetail, l:ldetail_descr, l:insert, l:cmd, l:select, l:data, l:docu, l:edit)
 		\ )

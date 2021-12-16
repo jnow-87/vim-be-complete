@@ -56,6 +56,29 @@ function s:annotate_signature(sig)
 endfunction
 "}}}
 
+"{{{
+" \brief	check if the cursor is within a syntax group whose name contains
+"			the given string
+"
+" \param	pattern		regex to match against the syntax group stack
+"
+" \return	v:true if a:name could be matched
+"			v:false otherwise
+function s:syngroup(pattern)
+	if !exists("*synstack")
+		return v:false
+	endif
+
+	for l:group in map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+		if l:group =~? a:pattern
+			return v:true
+		endif
+	endfor
+
+	return v:false
+endfunction
+"}}}
+
 
 """"
 "" global functions
@@ -80,17 +103,22 @@ function becomplete#complete#user()
 		return util#map#escape(g:becomplete_key_complete)
 	endif
 
-	" lsp or fallback completion
+	" keyword completion in comments and strings
+	if s:syngroup(".*comment.*") || s:syngroup(".*string.*")
+		return "\<c-n>"
+	endif
+
+	" language server completion
 	if l:server["initialised"] == 1 && becomplete#server#supports(l:server, "complete")
 		call l:server["doc_update"](l:file)
 		let l:items = l:server["complete"](l:file, line("."), col("."))
 		call complete(becomplete#util#word_base(getline("."), col(".")) + 1, l:items)
 
 		return ""
-
-	else
-		return util#map#escape(g:becomplete_complete_fallback)
 	endif
+
+	" user-defined fallback
+	return util#map#escape(g:becomplete_complete_fallback)
 endfunction
 "}}}
 
