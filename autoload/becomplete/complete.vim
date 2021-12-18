@@ -191,9 +191,8 @@ function becomplete#complete#signature_select(forward)
 
 	" find next argument, surrounded by markers
 	if a:forward == 1
-		let l:col = (l:col >= l:llen) ? 1 : l:col - 1
-
 		let l:left = stridx(l:line, g:becomplete_arg_mark_left, l:col)
+		let l:left = (l:left == -1) ? stridx(l:line, g:becomplete_arg_mark_left, 1) : l:left
 		let l:right = stridx(l:line, g:becomplete_arg_mark_right, l:left)
 
 	else
