@@ -45,12 +45,14 @@ let s:complete_kinds = [
 "			The "user_data" key is used for function signature information.
 "
 " \param	response	result of the lsp completion request
+" \param	line		line number of the completion
+" \param	column		column relative to a:line
 "
 " \return	list of vim completion items
-function s:item_filter(response)
+function s:item_filter(response, line, column)
 	let l:items = (type(a:response) == type(v:null)) ? [] : get(a:response, "items", a:response)
 	let l:lst = []
-	let l:word = becomplete#util#word_at(bufname(), line("."), col("."))
+	let l:word = becomplete#util#word_at(bufname(), a:line, a:column)
 	let l:wlen = len(l:word) - 1
 
 	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
@@ -120,6 +122,6 @@ function becomplete#lsp#complete#completion(file, line, column)
 	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
 	\ )
 
-	return s:item_filter(l:res)
+	return s:item_filter(l:res, a:line, a:column)
 endfunction
 "}}}

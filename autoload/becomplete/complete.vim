@@ -110,9 +110,17 @@ function becomplete#complete#user()
 
 	" language server completion
 	if l:server["initialised"] == 1 && becomplete#server#supports(l:server, "complete")
+		let l:col = col(".")
+
+		" start completion for the function "(" belongs to, instead of a
+		" function argument
+		if l:char == "("
+			let l:col -= 1
+		endif
+
 		call l:server["doc_update"](l:file)
-		let l:items = l:server["complete"](l:file, line("."), col("."))
-		call complete(becomplete#util#word_base(getline("."), col(".")) + 1, l:items)
+		let l:items = l:server["complete"](l:file, line("."), l:col)
+		call complete(becomplete#util#word_base(getline("."), l:col) + 1, l:items)
 
 		return ""
 	endif
