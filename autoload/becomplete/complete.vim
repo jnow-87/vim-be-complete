@@ -120,9 +120,14 @@ function becomplete#complete#user()
 
 		call l:server["doc_update"](l:file)
 		let l:items = l:server["complete"](l:file, line("."), l:col)
-		call complete(becomplete#util#word_base(getline("."), l:col) + 1, l:items)
 
-		return ""
+		if len(l:items) != 0
+			call complete(becomplete#util#word_base(getline("."), l:col) + 1, l:items)
+			return ""
+
+		elseif g:becomplete_complete_fallback_on_empty == 0
+			return ""
+		endif
 	endif
 
 	" user-defined fallback

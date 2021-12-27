@@ -29,6 +29,10 @@ let g:becomplete_arg_mark_right = ">`"
 " vim completion key sequence to use when no language server is available
 let g:becomplete_complete_fallback = get(g:, "becomplete_complete_fallback", "<c-n>")
 
+" use the g:becomplete_complete_fallback sequence also if the language server
+" returns no completion items
+let g:becomplete_complete_fallback_on_empty = get(g:, "becomplete_complete_fallback_on_empty", 0)
+
 " always show a menu for goto commands, even if a single item will be shown
 let g:becomplete_goto_menu_always = get(g:, "becomplete_goto_menu_always", 1)
 
