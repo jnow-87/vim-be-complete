@@ -53,7 +53,6 @@ function s:server_capabilities(server, capabilities)
 	let a:server["doc_open"] = function("becomplete#lsp#document#open")
 	let a:server["doc_close"] = function("becomplete#lsp#document#close")
 	let a:server["doc_update"] = function("becomplete#lsp#document#update")
-	let a:server["doc_modified"] = function("becomplete#lsp#document#modified")
 
 	if has_key(a:capabilities, "textDocumentSync")
 		let l:sync_capa = get(a:capabilities, "textDocumentSync", {})
@@ -69,12 +68,10 @@ function s:server_capabilities(server, capabilities)
 
 			if l:change == 0 || l:open_close == 0
 				let a:server["doc_update"] = function("becomplete#server#nop")
-				let a:server["doc_modified"] = function("becomplete#server#nop")
 			endif
 
 		elseif l:sync_capa == 0
 			let a:server["doc_update"] = function("becomplete#server#nop")
-				let a:server["doc_modified"] = function("becomplete#server#nop")
 		endif
 	endif
 
