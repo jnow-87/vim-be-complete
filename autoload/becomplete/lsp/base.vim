@@ -147,14 +147,17 @@ function s:handle_message(server, content)
 		call becomplete#log#msg("response for " . l:request["method"] . ": " . string(l:result))
 		let l:request["result"] = l:result
 
-	catch /^Vim(let):E716.*\"id\"/
+	catch /^Vim(let):E716.*: .*id.*/
 		call s:handle_notification(a:server, a:content)
 
-	catch /^Vim(let):E716.*\"result\"/
+	catch /^Vim(let):E716.*: .*result.*/
 		call becomplete#log#error("request \"" . l:request["method"] . "\": " . a:content["error"]["message"])
 
-	catch /^Vim(let):E716.*\"\d\+\"/
+	catch /^Vim(let):E716.*: .*\d\+.*/
 		call becomplete#log#error("missing request data for id " . l:id)
+
+	catch /.*/
+		call becomplete#log#error("unexpected exception, check if the format has changed: \"" . v:exception . "\"")
 
 	finally
 		if exists("l:id")
