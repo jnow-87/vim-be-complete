@@ -129,7 +129,14 @@ endfunction
 "
 " \param	server	server object
 function becomplete#lsp#server#start(server)
-	call becomplete#log#msg("starting language server: " . a:server["command"][0])
+	let l:binary = a:server["command"][0]
+
+	call becomplete#log#msg("starting language server: " . l:binary)
+
+	if !executable(l:binary)
+		call becomplete#log#error("server binary \"" . l:binary . "\" not executable")
+		return
+	endif
 
 	" start language server as vim job
 	let l:opts = {}
