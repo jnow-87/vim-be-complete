@@ -60,3 +60,16 @@ function becomplete#lsp#document#update(file)
 	\ )
 endfunction
 "}}}
+
+"{{{
+" \brief	lsp document save wrapper
+"
+" \param	file	file that has been saved/written
+function becomplete#lsp#document#write(file)
+	call becomplete#lsp#base#notification(
+	\	becomplete#server#get(a:file),
+	\	"textDocument/didSave",
+	\	becomplete#lsp#param#doc(a:file)
+	\ )
+endfunction
+"}}}

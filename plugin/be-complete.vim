@@ -154,6 +154,7 @@ endfunction
 function s:buffer_modified(file)
 	let l:server = becomplete#server#get(a:file)
 	call l:server["doc_update"](a:file)
+	call l:server["doc_write"](a:file)
 endfunction
 "}}}
 

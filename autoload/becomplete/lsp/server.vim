@@ -70,6 +70,10 @@ function s:server_capabilities(server, capabilities)
 				let a:server["doc_update"] = function("becomplete#server#nop")
 			endif
 
+			if has_key(l:sync_capa, "save")
+				let a:server["doc_write"] = function("becomplete#lsp#document#write")
+			endif
+
 		elseif l:sync_capa == 0
 			let a:server["doc_update"] = function("becomplete#server#nop")
 		endif
