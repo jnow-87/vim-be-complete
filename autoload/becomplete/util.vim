@@ -82,6 +82,10 @@ function becomplete#util#word_at(file, line, column)
       let l:end += 1
     endwhile
 
+	if l:line[l:end] !~ '\i\|\k'
+		return ""
+	endif
+
 	return l:line[l:start:l:end]
 endfunction
 "}}}

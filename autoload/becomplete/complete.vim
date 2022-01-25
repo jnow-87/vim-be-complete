@@ -69,7 +69,7 @@ function s:syngroup(pattern)
 		return v:false
 	endif
 
-	for l:group in map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+	for l:group in map(synstack(line('.'), col('.') - 1), 'synIDattr(v:val, "name")')
 		if l:group =~? a:pattern
 			return v:true
 		endif
@@ -110,11 +110,24 @@ function becomplete#complete#user()
 
 	" language server completion
 	if l:server["initialised"] == 1 && becomplete#server#supports(l:server, "complete")
-		call l:server["doc_update"](l:file)
-		let l:items = l:server["complete"](l:file, line("."), col("."))
-		call complete(becomplete#util#word_base(getline("."), col(".")) + 1, l:items)
+		let l:col = col(".")
 
-		return ""
+		" start completion for the function "(" belongs to, instead of a
+		" function argument
+		if l:char == "("
+			let l:col -= 1
+		endif
+
+		call l:server["doc_update"](l:file)
+		let l:items = l:server["complete"](l:file, line("."), l:col)
+
+		if len(l:items) != 0
+			call complete(becomplete#util#word_base(getline("."), l:col) + 1, l:items)
+			return ""
+
+		elseif g:becomplete_complete_fallback_on_empty == 0
+			return ""
+		endif
 	endif
 
 	" user-defined fallback
@@ -183,9 +196,8 @@ function becomplete#complete#signature_select(forward)
 
 	" find next argument, surrounded by markers
 	if a:forward == 1
-		let l:col = (l:col >= l:llen) ? 1 : l:col - 1
-
 		let l:left = stridx(l:line, g:becomplete_arg_mark_left, l:col)
+		let l:left = (l:left == -1) ? stridx(l:line, g:becomplete_arg_mark_left, 1) : l:left
 		let l:right = stridx(l:line, g:becomplete_arg_mark_right, l:left)
 
 	else
