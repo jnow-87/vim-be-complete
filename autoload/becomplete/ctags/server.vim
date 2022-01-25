@@ -36,7 +36,7 @@ function becomplete#ctags#server#start(server, filetype)
 	let a:server["doc_open"] = function("becomplete#ctags#document#open")
 	let a:server["doc_close"] = function("becomplete#server#nop")
 	let a:server["doc_update"] = function("becomplete#ctags#document#update")
-	let a:server["doc_modified"] = function("becomplete#ctags#document#modified")
+	let a:server["doc_write"] = function("becomplete#server#nop")
 
 	let a:server["complete"] = function("becomplete#server#nop")
 	let a:server["goto_decl"] = function("becomplete#ctags#goto#declaration")

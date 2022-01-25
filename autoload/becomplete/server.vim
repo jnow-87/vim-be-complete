@@ -36,7 +36,7 @@ function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	\	"doc_open": function("becomplete#server#nop"),
 	\	"doc_close": function("becomplete#server#nop"),
 	\	"doc_update": function("becomplete#server#nop"),
-	\	"doc_modified": function("becomplete#server#nop"),
+	\	"doc_write": function("becomplete#server#nop"),
 	\	"complete": function("becomplete#server#nop"),
 	\	"goto_decl": function("becomplete#server#nop"),
 	\	"goto_def": function("becomplete#server#nop"),

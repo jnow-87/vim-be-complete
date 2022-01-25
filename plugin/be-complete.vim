@@ -153,7 +153,8 @@ endfunction
 " \param	file	file name
 function s:buffer_modified(file)
 	let l:server = becomplete#server#get(a:file)
-	call l:server["doc_modified"](a:file)
+	call l:server["doc_update"](a:file)
+	call l:server["doc_write"](a:file)
 endfunction
 "}}}
 
@@ -183,7 +184,7 @@ command -nargs=0 BeCompleteCtagsSymtab call becomplete#ctags#symtab#print()
 " buffer control
 autocmd BeComplete FileType * call s:buffer_init(expand("<afile>:p"))
 autocmd BeComplete BufUnload * call s:buffer_unload(expand("<afile>:p"))
-autocmd BeComplete BufWrite * call s:buffer_modified(expand("<afile>:p"))
+autocmd BeComplete BufWritePost * call s:buffer_modified(expand("<afile>:p"))
 
 " shutdown
 autocmd BeComplete VimLeave * call becomplete#server#stop_all()

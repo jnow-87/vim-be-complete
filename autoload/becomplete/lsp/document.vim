@@ -5,9 +5,6 @@
 "{{{
 " mapping from file names to language server file version
 let s:versions = {}
-
-" mapping from file names to modifcation state
-let s:modified = {}
 "}}}
 
 
@@ -23,8 +20,6 @@ function becomplete#lsp#document#open(file)
 	if !has_key(s:versions, a:file)
 		let s:versions[a:file] = 0
 	endif
-
-	let s:modified[a:file] = 0
 
 	call becomplete#lsp#base#notification(
 	\	becomplete#server#get(a:file),
@@ -56,12 +51,7 @@ endfunction
 "
 " \param	file	file to update
 function becomplete#lsp#document#update(file)
-	if getbufvar(a:file, "&modified") == 0 && s:modified[a:file] == 0
-		return
-	endif
-
 	let s:versions[a:file] += 1
-	let s:modified[a:file] = 0
 
 	call becomplete#lsp#base#notification(
 	\	becomplete#server#get(a:file),
@@ -72,10 +62,14 @@ endfunction
 "}}}
 
 "{{{
-" \brief	mark a file as modified
+" \brief	lsp document save wrapper
 "
-" \param	file	file to mark
-function becomplete#lsp#document#modified(file)
-	let s:modified[a:file] = 1
+" \param	file	file that has been saved/written
+function becomplete#lsp#document#write(file)
+	call becomplete#lsp#base#notification(
+	\	becomplete#server#get(a:file),
+	\	"textDocument/didSave",
+	\	becomplete#lsp#param#doc(a:file)
+	\ )
 endfunction
 "}}}
