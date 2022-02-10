@@ -12,11 +12,13 @@
 "			  a:response is not a list
 "			- a:response in case it is already a list
 function becomplete#lsp#response#ensure_list(response)
-	if type(a:response) == type(v:null)
+	let l:rtype = type(a:response)
+
+	if l:rtype == type(v:null) || (l:rtype == type({}) && len(a:response) == 0)
 		return []
 	endif
 
-	return (type(a:response) != type([])) ? [ a:response ] : a:response
+	return (l:rtype != type([])) ? [ a:response ] : a:response
 endfunction
 "}}}
 

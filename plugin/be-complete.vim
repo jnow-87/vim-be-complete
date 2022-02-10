@@ -113,7 +113,6 @@ endfunction
 " \param	file	file name
 function s:buffer_init(file)
 	let l:ftype = getbufvar(a:file, "&filetype")
-
 	let l:server = becomplete#server#start(l:ftype)
 
 	if l:server["initialised"] == 1
@@ -182,9 +181,9 @@ command -nargs=0 BeCompleteCtagsSymtab call becomplete#ctags#symtab#print()
 
 "{{{
 " buffer control
-autocmd BeComplete FileType * call s:buffer_init(expand("<afile>:p"))
-autocmd BeComplete BufUnload * call s:buffer_unload(expand("<afile>:p"))
-autocmd BeComplete BufWritePost * call s:buffer_modified(expand("<afile>:p"))
+autocmd BeComplete FileType * call s:buffer_init(resolve(expand("<afile>:p")))
+autocmd BeComplete BufUnload * call s:buffer_unload(resolve(expand("<afile>:p")))
+autocmd BeComplete BufWritePost * call s:buffer_modified(resolve(expand("<afile>:p")))
 
 " shutdown
 autocmd BeComplete VimLeave * call becomplete#server#stop_all()

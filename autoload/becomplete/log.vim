@@ -169,5 +169,6 @@ function becomplete#log#error(msg)
 
 	echohl ErrorMsg
 	echom "be-complete error: " . a:msg
+	echohl None
 endfunction
 "}}}
