@@ -40,6 +40,43 @@ let s:complete_kinds = [
 """"
 
 "{{{
+" \brief	Isolate a function signature from the given string.
+"			The signature is assumed to be found as the last part of the
+"			string, i.e. the string has to end on ")"
+"
+" \param	str		string to check for a signature
+"
+" \return	the identified signature or an empty string of no signature could
+"			be found
+function s:signature(str)
+	if a:str[-1:-1] != ")"
+		return ""
+	endif
+
+	let l:i = len(a:str) - 2
+	let l:nbrackets = 0
+
+	" iterate through string, looking for the signature opening bracket
+	while l:i > 0
+		if a:str[l:i] == "("
+			if l:nbrackets == 0
+				return a:str[l:i:]
+			endif
+
+			let l:nbrackets -= 1
+
+		elseif a:str[l:i] == ")"
+			let l:nbrackets += 1
+		endif
+
+		let l:i -= 1
+	endwhile
+
+	return ""
+endfunction
+"}}}
+
+"{{{
 " \brief	Convert the lsp completion items to a list of dictionaries with
 "			the word, kind, menu and dup keys according to vim complete-items.
 "			The "user_data" key is used for function signature information.
@@ -73,6 +110,9 @@ function s:item_filter(response, line, column)
 		let l:data = get(l:item, "data", "")
 		let l:edit = get(l:item, "textEdit", "")
 
+		let l:signature = s:signature(l:label)
+		if l:signature == "" | let l:signature = s:signature(l:detail) | endif
+
 		" skip items that don't start with the word under the cursor
 		if l:word != "" && l:insert[0:l:wlen] !=# l:word
 			continue
@@ -90,7 +130,7 @@ function s:item_filter(response, line, column)
 		\		"word": l:insert,
 		\		"kind": l:kind,
 		\		"menu": l:detail . " " . l:label,
-		\		"user_data": l:label[len(l:insert):],
+		\		"user_data": l:signature,
 		\		"dup": 1,
 		\	}
 		\ )

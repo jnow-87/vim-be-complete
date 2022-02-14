@@ -46,7 +46,6 @@ function becomplete#util#buftext(file)
 endfunction
 "}}}
 
-
 "{{{
 " \brief	find the index in a string which is the base of the word at a:idx
 "
