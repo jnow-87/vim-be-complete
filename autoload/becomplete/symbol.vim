@@ -35,7 +35,7 @@ endfunction
 "
 " \return	list with the symbols in the current file
 function s:symbols(kinds)
-	let l:file = expand("%:p")
+	let l:file = becomplete#util#curfile()
 	let l:server = becomplete#server#get(l:file)
 
 	call l:server["doc_update"](l:file)

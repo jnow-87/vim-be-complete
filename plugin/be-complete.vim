@@ -181,9 +181,9 @@ command -nargs=0 BeCompleteCtagsSymtab call becomplete#ctags#symtab#print()
 
 "{{{
 " buffer control
-autocmd BeComplete FileType * call s:buffer_init(resolve(expand("<afile>:p")))
-autocmd BeComplete BufUnload * call s:buffer_unload(resolve(expand("<afile>:p")))
-autocmd BeComplete BufWritePost * call s:buffer_modified(resolve(expand("<afile>:p")))
+autocmd BeComplete FileType * call s:buffer_init(becomplete#util#curfile(1))
+autocmd BeComplete BufUnload * call s:buffer_unload((becomplete#util#curfile(1)))
+autocmd BeComplete BufWritePost * call s:buffer_modified((becomplete#util#curfile(1)))
 
 " shutdown
 autocmd BeComplete VimLeave * call becomplete#server#stop_all()

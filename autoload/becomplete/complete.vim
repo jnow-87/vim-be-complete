@@ -93,7 +93,7 @@ function becomplete#complete#user()
 		return "\<c-n>"
 	endif
 
-	let l:file = expand("%:p")
+	let l:file = becomplete#util#curfile()
 	let l:server = becomplete#server#get(l:file)
 
 	let l:char = getline('.')[col(".") - 2]

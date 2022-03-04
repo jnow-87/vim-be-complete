@@ -88,3 +88,14 @@ function becomplete#util#word_at(file, line, column)
 	return l:line[l:start:l:end]
 endfunction
 "}}}
+
+"{{{
+" \brief	return the current file's name
+"
+" \param	in_autocmd	define if the function is called from an autocmd
+"
+" \return	expanded and resolved file name
+function becomplete#util#curfile(in_autocmd=0)
+	return resolve(expand((a:in_autocmd ? "<afile>" : "%") . ":p"))
+endfunction
+"}}}

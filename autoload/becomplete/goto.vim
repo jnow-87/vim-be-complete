@@ -158,7 +158,7 @@ endfunction
 "
 " \return	string triggering the goto menu
 function becomplete#goto#decldef()
-	let l:file = expand("%:p")
+	let l:file = becomplete#util#curfile()
 	let l:line = line(".")
 	let l:col = col(".")
 	let l:server = becomplete#server#get(l:file)
