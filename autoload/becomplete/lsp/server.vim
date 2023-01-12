@@ -22,7 +22,7 @@ function s:shutdown(server)
 	endif
 
 	call becomplete#log#msg("trigger server shutdown: " . a:server["command"][0])
-	let l:res = becomplete#lsp#base#request(a:server, "shutdown", {})
+	let l:res = becomplete#lsp#base#request(a:server, "shutdown")
 
 	if l:res == v:null
 		let l:job = a:server["job"]
