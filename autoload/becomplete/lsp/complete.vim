@@ -105,10 +105,11 @@ function s:item_filter(response, line, column)
 		let l:kind = s:complete_kinds[get(l:item, "kind", 0)]
 		let l:docu = get(l:item, "documentation", "")
 		let l:select = get(l:item, "preselect", "")
-		let l:insert = get(l:item, "insertText", "")
 		let l:cmd = get(l:item, "command", "")
 		let l:data = get(l:item, "data", "")
 		let l:edit = get(l:item, "textEdit", "")
+		let l:edit = get(l:item, "textEdit", {})
+		let l:insert = get(l:edit, "newText", get(l:item, "insertText", ""))
 
 		let l:signature = s:signature(l:label)
 		if l:signature == "" | let l:signature = s:signature(l:detail) | endif
