@@ -40,53 +40,30 @@ let s:complete_kinds = [
 """"
 
 "{{{
-" \brief	Isolate a function signature from the given string.
-"			The signature is assumed to be found as the last part of the
-"			string, i.e. the string has to end on ")"
+" \brief	Isolate function arguments from the given string.
+"			The arguments are assumed to be enclosed in "()"
 "
-" \param	str		string to check for a signature
+" \param	str		string to check for function arguments
 "
-" \return	the identified signature or an empty string of no signature could
+" \return	the identified arguments or an empty string if none could
 "			be found
-function s:signature(str)
-	if a:str[-1:-1] != ")"
-		return ""
-	endif
-
-	let l:i = len(a:str) - 2
-	let l:nbrackets = 0
-
-	" iterate through string, looking for the signature opening bracket
-	while l:i > 0
-		if a:str[l:i] == "("
-			if l:nbrackets == 0
-				return a:str[l:i:]
-			endif
-
-			let l:nbrackets -= 1
-
-		elseif a:str[l:i] == ")"
-			let l:nbrackets += 1
-		endif
-
-		let l:i -= 1
-	endwhile
-
-	return ""
+function s:func_args(str, server)
+	return a:server["lang_calls"]["func_args"](a:str)
 endfunction
 "}}}
 
 "{{{
 " \brief	Convert the lsp completion items to a list of dictionaries with
 "			the word, kind, menu and dup keys according to vim complete-items.
-"			The "user_data" key is used for function signature information.
+"			The "user_data" key is used for function argument information.
 "
 " \param	response	result of the lsp completion request
 " \param	line		line number of the completion
 " \param	column		column relative to a:line
+" \param	server		lsp server object
 "
 " \return	list of vim completion items
-function s:item_filter(response, line, column)
+function s:item_filter(response, line, column, server)
 	let l:items = (type(a:response) == type(v:null)) ? [] : get(a:response, "items", a:response)
 	let l:lst = []
 	let l:word = becomplete#util#word_at(bufname(), a:line, a:column)
@@ -111,8 +88,8 @@ function s:item_filter(response, line, column)
 		let l:edit = get(l:item, "textEdit", {})
 		let l:insert = get(l:edit, "newText", get(l:item, "insertText", ""))
 
-		let l:signature = s:signature(l:label)
-		if l:signature == "" | let l:signature = s:signature(l:detail) | endif
+		let l:func_args = s:func_args(l:label, a:server)
+		if l:func_args == "" | let l:func_args = s:func_args(l:detail, a:server) | endif
 
 		" skip items that don't start with the word under the cursor
 		if l:word != "" && l:insert[0:l:wlen] !=# l:word
@@ -131,7 +108,7 @@ function s:item_filter(response, line, column)
 		\		"word": l:insert,
 		\		"kind": l:kind,
 		\		"menu": l:detail . " " . l:label,
-		\		"user_data": l:signature,
+		\		"user_data": l:func_args,
 		\		"dup": 1,
 		\	}
 		\ )
@@ -156,13 +133,14 @@ endfunction
 " \return	list of vim completion items, cf. s:item_filter()
 function becomplete#lsp#complete#completion(file, line, column)
 	call becomplete#log#msg("completion for " . a:file . ":" . a:line . ":" . a:column)
+	let l:server = becomplete#server#get(a:file)
 
 	let l:res = becomplete#lsp#base#request(
-	\	becomplete#server#get(a:file),
+	\	l:server,
 	\	"textDocument/completion",
 	\	becomplete#lsp#param#doc_pos(a:file, a:line, a:column)
 	\ )
 
-	return s:item_filter(l:res, a:line, a:column)
+	return s:item_filter(l:res, a:line, a:column, l:server)
 endfunction
 "}}}
