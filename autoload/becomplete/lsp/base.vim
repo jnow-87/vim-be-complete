@@ -27,7 +27,10 @@ function s:format(method, params, id=-1)
 	let l:req = {}
 	let l:req["jsonrpc"] = "2.0"
 	let l:req["method"] = a:method
-	let l:req["params"] = a:params
+
+	if type(a:params) != v:t_none
+		let l:req["params"] = a:params
+	endif
 
 	if a:id != -1
 		let l:req["id"] = a:id
@@ -219,7 +222,7 @@ endfunction
 " \return	if the server is not running while not currently performing the
 "			server initialisation, an empty dictionary is returned
 "			otherwise the lsp result is returned as a dictionary
-function becomplete#lsp#base#request(server, method, params)
+function becomplete#lsp#base#request(server, method, params=v:none)
 	if job_status(a:server["job"]) != "run" || (a:server["initialised"] != 1 && a:method != "initialize")
 		call becomplete#log#error("request \"" . a:method . "\": server not initialised")
 		return {}
@@ -243,7 +246,7 @@ endfunction
 " \param	server	lsp server object
 " \param	method	lsp method to call
 " \param	params	parameters for a:method
-function becomplete#lsp#base#notification(server, method, params)
+function becomplete#lsp#base#notification(server, method, params=v:none)
 	if a:server["initialised"] != 1 && a:method != "initialized"
 		call becomplete#log#error("notification \"" . a:method . "\": server not initialised")
 		return

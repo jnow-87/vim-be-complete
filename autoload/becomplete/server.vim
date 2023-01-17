@@ -42,6 +42,8 @@ function s:server(cmd=[], filetypes=[], timeout_ms=0)
 	\	"goto_def": function("becomplete#server#nop"),
 	\	"symbols": function("becomplete#server#nop"),
 	\	"shutdown": function("becomplete#server#nop"),
+	\
+	\	"lang_calls": becomplete#lang#calls(a:filetypes),
 	\ }
 endfunction
 "}}}
@@ -73,6 +75,8 @@ function becomplete#server#register(cmd, filetypes, timeout_ms)
 			call becomplete#log#error("server for filetype " . l:ftype . " already registered")
 		endif
 	endfor
+
+	let l:server["lang_calls"] = becomplete#lang#calls(l:server["filetypes"])
 endfunction
 "}}}
 
