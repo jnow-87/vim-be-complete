@@ -64,10 +64,15 @@ endfunction
 "
 " \return	list of vim completion items
 function s:item_filter(response, line, column, server)
-	let l:items = (type(a:response) == type(v:null)) ? [] : get(a:response, "items", a:response)
 	let l:lst = []
 	let l:word = becomplete#util#word_at(bufname(), a:line, a:column)
 	let l:wlen = len(l:word) - 1
+
+	let l:items = (type(a:response) == type(v:null)) ? [] : a:response
+
+	if type(l:items) == type({})
+		let l:items = get(a:response, "items", [])
+	endif
 
 	call becomplete#log#msg(printf("%20.20s %10.10s %10.10s %25.25s %10.10s %15.15s %6.6s %10.10s %s %s",
 	\	"label", "kind", "detail", "ldetail", "insert", "command", "select", "data", "docu", "edit")

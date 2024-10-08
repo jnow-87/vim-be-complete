@@ -125,7 +125,7 @@ function becomplete#util#strrpair(str, pair, start=len(a:str)-1)
 	let l:i = l:end - 1
 	let l:nest = 0
 
-	while l:i > 0
+	while l:i >= 0
 		if a:str[l:i] == a:pair[0]
 			if l:nest == 0
 				return [a:str[l:i:l:end], l:i]
