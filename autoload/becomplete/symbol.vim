@@ -13,17 +13,13 @@ nunmap <c-f11><c-f12><c-f13>
 "			Focus the symbol and update the vim tag stack with the current
 "			line.
 "
-" \param	selection	dictionary describing the selected item, cf. help
-"						v:completed_item
-function s:selected(selection)
-	call becomplete#log#msg("goto: " . string(a:selection))
-
-	if !len(a:selection) || a:selection["user_data"] == ""
-		return
-	endif
+" \param	result	dict with the item selected by the user, cf. s:menu for
+" 			the content
+function s:selected(result)
+	call becomplete#log#msg("goto: " . string(a:result))
 
 	call util#tagstack#push_cursor()
-	call util#window#focus_line(a:selection["user_data"], 1)
+	call util#window#focus_line(a:result["line"], 1)
 endfunction
 "}}}
 
@@ -78,26 +74,33 @@ endfunction
 " \return	string triggering a popup menu
 function s:menu(kinds, closest=0)
 	let l:items = []
+	let l:longest = 0
 
 	for l:sym in s:symbols(a:kinds)
+		let l:len = len(l:sym["name"])
+
+		if l:len > l:longest
+			let l:longest = l:len
+		endif
+	endfor
+
+	for l:sym in s:symbols(a:kinds)
+		let l:text = printf(" %-*.*s %s %s ", l:longest, l:longest, l:sym["name"], l:sym["kind"], l:sym["detail"])
 		let l:items += [{
-		\	"word": "",
-		\	"abbr": l:sym["name"],
-		\	"kind": l:sym["kind"],
-		\	"menu": l:sym["detail"],
-		\	"user_data": l:sym["line"],
+		\	"text": l:text,
+		\	"line": l:sym["line"],
 		\ }]
 	endfor
 
-	call becomplete#util#sort(l:items, "user_data")
-	let l:idx = s:find_closest(l:items, "user_data")
+	call becomplete#util#sort(l:items, "line")
+	let l:idx = s:find_closest(l:items, "line")
 
 	if a:closest != 0
 		let l:items = l:idx > 0 ? [l:items[l:idx - 1]] : []
 		let l:idx = 1
 	endif
 
-	return util#pmenu#open(l:items, s:sid . "selected", "i", l:idx)
+	return util#fuzzymenu#open(l:items, s:sid . "selected", l:idx)
 endfunction
 "}}}
 

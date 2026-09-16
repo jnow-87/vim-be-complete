@@ -215,7 +215,7 @@ call util#map#nvi(g:becomplete_key_arg_prev, "<esc>:call becomplete#complete#sig
 call util#map#n(g:becomplete_key_goto, "<insert><c-r>=becomplete#goto#decldef()<cr>")
 
 " symbol
-call util#map#n(g:becomplete_key_symbol_all, "<insert><c-r>=becomplete#symbol#all()<cr>")
-call util#map#n(g:becomplete_key_symbol_functions, "<insert><c-r>=becomplete#symbol#functions()<cr>")
-call util#map#n(g:becomplete_key_symbol_funchead, "<insert><c-r>=becomplete#symbol#function_head()<cr>")
+call util#map#n(g:becomplete_key_symbol_all, "<esc>:call becomplete#symbol#all()<cr>")
+call util#map#n(g:becomplete_key_symbol_functions, "<esc>:call becomplete#symbol#functions()<cr>")
+call util#map#n(g:becomplete_key_symbol_funchead, "<esc>:call becomplete#symbol#function_head()<cr>")
 "}}}
