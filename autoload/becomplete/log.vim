@@ -131,7 +131,7 @@ function becomplete#log#show()
 	highlight link becomplete_arg None
 
 	" auto-close if it is the last remaining window
-	exec 'autocmd BeComplete BufEnter ' . s:buf_name . ' silent if winnr("$") == 1 | quit | endif'
+	exec 'autocmd BeComplete BufEnter ' . s:buf_name . ' silent call util#window#close_if_last()'
 endfunction
 "}}}
 
